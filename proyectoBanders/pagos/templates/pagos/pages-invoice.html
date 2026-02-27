@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo Banders - {{ pago.transaccion_id }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            padding: 40px;
+            color: #1e293b;
+            line-height: 1.5;
+            background-color: #f8fafc;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .header-table {
+            width: 100%;
+            border-bottom: 3px solid #1e1b4b;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e1b4b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        /* Uso de tabla para la info en lugar de Flex para evitar errores en PDF */
+        .info-table {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        .info-td {
+            width: 50%;
+            vertical-align: top;
+        }
+
+        table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .items-table th {
+            background: #f1f5f9;
+            padding: 12px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            border-radius: 5px;
+        }
+        .items-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .total-card {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            text-align: right;
+        }
+        .status-paid { color: #16a34a; font-weight: bold; }
+        .status-debt {
+            color: #dc2626;
+            font-weight: 800;
+            font-size: 24px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .no-print { text-align: center; margin-bottom: 30px; }
+        .btn-print {
+            padding: 12px 35px;
+            background: #1e1b4b;
+            color: white;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; background-color: white; }
+            .invoice-box { border: none; box-shadow: none; max-width: 100%; padding: 20px; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">🖨️ IMPRIMIR COMPROBANTE</button>
+    </div>
+
+    <div class="invoice-box">
+        <table class="header-table">
+            <tr>
+                <td>
+                    <div class="title">Consorcio Jurídico Contable Banders</div>
+                    <small style="color: #64748b;">Excelencia legal y contable a su servicio</small>
+                </td>
+                <td style="text-align: right;">
+                    <div style="font-size: 18px; font-weight: bold; color: #1e1b4b;">RECIBO: #{{ pago.transaccion_id }}</div>
+                    <small style="color: #64748b;">Emitido: {{ pago.fecha_creacion|date:"d/m/Y" }}</small>
+                </td>
+            </tr>
+        </table>
+
+        <table class="info-table">
+            <tr>
+                <td class="info-td">
+                    <strong style="font-size: 11px; color: #64748b; text-transform: uppercase;">Cliente</strong><br>
+                    <div style="font-size: 18px; font-weight: bold; margin-top: 5px;">
+                        {{ pago.expediente.cliente.nombre }} {{ pago.expediente.cliente.apellido }}
+                    </div>
+                    <div style="color: #475569; font-size: 13px;">
+                        Tel: {{ pago.expediente.cliente.telefono }}<br>
+                        ID/RUT: {{ pago.expediente.cliente.rut }}
+                    </div>
+                </td>
+                <td class="info-td" style="text-align: right;">
+                    <strong style="font-size: 11px; color: #64748b; text-transform: uppercase;">Concepto del Servicio</strong><br>
+                    <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">
+                        {{ pago.expediente.titulo }}
+                    </div>
+                    <div style="color: #475569; font-size: 13px;">
+                        Tipo: {{ pago.get_concepto_display }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <h3 style="font-size: 14px; text-transform: uppercase; color: #1e1b4b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Historial de Abonos</h3>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Fecha de Pago</th>
+                    <th>Descripción</th>
+                    <th>Método de Pago</th>
+                    <th style="text-align: right;">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abono in pago.abonos.all %}
+                <tr>
+                    <td>{{ abono.fecha_abono|date:"d/m/Y" }}</td>
+                    <td>Abono parcial a honorarios</td>
+                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ abono.get_metodo_pago_display }}</span></td>
+                    <td style="text-align: right; font-weight: bold;">$ {{ abono.monto|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #94a3b8; padding: 30px;">No se han registrado abonos aún.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-card">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="text-align: right; border-bottom: none; color: #64748b;">Valor Total del Contrato:</td>
+                    <td style="text-align: right; border-bottom: none; width: 150px;"><strong>$ {{ pago.total_deuda|floatformat:2 }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: right; border-bottom: none; color: #16a34a;">Total Abonado:</td>
+                    <td style="text-align: right; border-bottom: none;" class="status-paid">$ {{ pago.total_abonado|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top: 15px; border-bottom: none;">
+                        <div style="border-top: 2px solid #e2e8f0; padding-top: 15px;">
+                            <small style="color: #64748b; text-transform: uppercase; font-weight: bold; font-size: 10px;">Saldo Pendiente Actual</small>
+                            <span class="status-debt">$ {{ pago.saldo_pendiente|floatformat:2 }}</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="margin-top: 60px; text-align: center; border-top: 1px dashed #e2e8f0; padding-top: 20px;">
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 5px;">
+                Este documento es un comprobante de pago oficial generado por el sistema Banders Law Firm.
+            </p>
+            <p style="font-size: 11px; color: #94a3b8;">
+                &copy; 2026 Consorcio Jurídico Contable Banders - Todos los derechos reservados.
+            </p>
+        </div>
+    </div> </body>
+</html>

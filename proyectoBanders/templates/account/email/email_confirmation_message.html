@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .wrapper { background-color: #f8fafc; padding: 40px 20px; font-family: 'Segoe UI', sans-serif; }
+        .card { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .header { background-color: #405189; padding: 30px; text-align: center; color: white; }
+        .body { padding: 40px; text-align: center; color: #334155; }
+        .btn { background-color: #405189; color: white !important; padding: 15px 30px; border-radius: 12px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 25px; }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <div class="header">
+                <h1 style="margin:0; font-size: 24px;">Banders Legal Support</h1>
+            </div>
+            <div class="body">
+                <h2>¡Bienvenido al Sistema!</h2>
+                <p>Se ha creado una cuenta para usted en la plataforma del <b>Consorcio Jurídico Banders</b>.</p>
+                <p>Para activar su acceso y comenzar a gestionar expedientes, por favor haga clic en el siguiente botón:</p>
+
+                <a href="{{ activate_url }}" class="btn">Confirmar Identidad y Acceder</a>
+
+                <p style="margin-top: 30px; font-size: 13px;">Si el botón no funciona, copie y pegue este enlace en su navegador:<br>
+                <small>{{ activate_url }}</small></p>
+            </div>
+            <div class="footer">
+                &copy; 2026 Banders & Asociados. Este es un sistema privado y confidencial.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,300 @@
+{% extends "vertical.html" %}
+{% load static %}
+
+{% block title %} Perfil Profesional | {{ colaborador.user.get_full_name }} {% endblock %}
+
+{% block page_content %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+<div class="container-fluid py-4" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+
+    {# 1. HEADER: BANNER Y AVATAR #}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg" style="border-radius: 25px; overflow: visible;">
+                <div class="position-relative">
+                    <div class="profile-cover-wrapper">
+                        <img src="{% if colaborador.portada %}{{ colaborador.portada.url }}{% else %}{% static 'images/portada_abogados.jpg' %}{% endif %}"
+                             class="w-100" style="height: 320px; object-fit: cover; border-radius: 25px 25px 0 0; filter: brightness(0.85);">
+                    </div>
+
+                    {% if es_dueno %}
+                    <div class="position-absolute top-0 end-0 m-4" style="z-index: 20;">
+                        <a href="{% url 'abogados:abogado_edit' colaborador.pk %}" class="btn btn-blur rounded-pill px-4 shadow-lg border-0 text-white fw-bold btn-sm">
+                            <iconify-icon icon="solar:pen-2-bold-duotone" class="me-2"></iconify-icon> Editar Perfil
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-body px-4 px-md-5 pb-4">
+                    <div class="d-flex flex-column flex-md-row align-items-center align-items-md-end">
+                        <div class="avatar-container">
+                            <div class="position-relative d-inline-block">
+                                <img src="{% if colaborador.foto %}{{ colaborador.foto.url }}{% else %}{% static 'images/users/avatar-1.jpg' %}{% endif %}"
+                                     class="rounded-circle border border-5 border-white shadow-xl profile-avatar-img">
+                                <div class="status-indicator bg-success"></div>
+                            </div>
+                        </div>
+
+                        <div class="profile-info-content ms-md-4 flex-grow-1 mt-3 mt-md-0 text-center text-md-start pb-2">
+                            <h2 class="fw-800 text-dark mb-1 name-title" style="letter-spacing: -0.5px;">
+                                {{ colaborador.user.get_full_name|upper }}
+                            </h2>
+                            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-center justify-content-md-start">
+                                <span class="badge-premium py-1 px-3 shadow-sm">
+                                    <iconify-icon icon="solar:shield-check-bold-duotone" class="text-primary me-1"></iconify-icon>
+                                    {{ colaborador.especialidad|default:"Abogado Especialista" }}
+                                </span>
+                                <span class="text-muted d-flex align-items-center fw-600 small ms-md-2">
+                                    <iconify-icon icon="solar:map-point-bold-duotone" class="me-1"></iconify-icon> Consorcio Jurídico Contable Banders - Ecuador
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 2. MÉTRICAS DASHBOARD - DATOS REALES #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-card bg-white p-4 shadow-sm h-100 border-light position-relative">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-uppercase text-muted fw-700 x-small mb-3 ls-1">Expedientes Totales</p>
+                        <h3 class="display-6 fw-800 text-dark mb-0">{{ casos_activos|default:"0" }}</h3>
+                    </div>
+                    <span class="badge bg-soft-success text-success rounded-pill px-2 py-1 x-small fw-bold" style="background-color: #e8f5e9;">+{{ casos_activos }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="metric-card bg-white p-4 shadow-sm h-100 border-light">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-uppercase text-muted fw-700 x-small mb-3 ls-1">Cartera de Clientes</p>
+                        <h3 class="display-6 fw-800 text-dark mb-0">{{ total_clientes|default:"0" }}</h3>
+                    </div>
+                    <div class="text-muted opacity-50">
+                        <iconify-icon icon="solar:user-plus-bold-duotone" style="font-size: 24px;"></iconify-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 col-xl-6">
+            <div class="card border-0 p-4 text-white card-infinite-bg h-100 shadow-lg" style="border-radius: 28px;">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="chip-gold"></div>
+                    <span class="fw-bold" style="font-size: 0.8rem; letter-spacing: 1.5px; opacity: 0.9;">BANDERS <span class="fw-300">INFINITE</span></span>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-uppercase mb-2 opacity-50 fw-600" style="font-size: 0.65rem; letter-spacing: 1px;">TOTAL RECAUDADO</p>
+                    <h2 class="fw-800 mb-0" style="font-size: 2.5rem; letter-spacing: 2px;">$ {{ total_recaudado|floatformat:0 }}</h2>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mt-auto">
+                    <span class="fw-500 opacity-90 text-uppercase" style="font-size: 0.9rem;">{{ colaborador.user.get_full_name }}</span>
+                    <div class="text-end">
+                        <span class="fw-bold" style="font-size: 0.7rem; color: #ff5e5e; letter-spacing: 1px;">
+                            PENDIENTE: <span class="ms-1" style="font-size: 1.2rem; color: #ff5e5e;">$ {{ total_por_cobrar|floatformat:0 }}</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 3. CUERPO: INFO Y GESTIÓN #}
+    <div class="row g-4">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-800 text-dark mb-4 text-uppercase ls-1 small">Información Profesional</h6>
+                    <div class="info-item mb-3">
+                        <label class="text-muted fw-700 x-small d-block mb-1 text-uppercase">Teléfono</label>
+                        <div class="p-2 bg-light rounded-3 fw-700 text-dark small d-flex align-items-center">
+                            <iconify-icon icon="solar:phone-bold-duotone" class="me-2 text-primary fs-18"></iconify-icon>
+                            {{ colaborador.telefono|default:"+593 -- --- ----" }}
+                        </div>
+                    </div>
+                    <div class="info-item mb-4">
+                        <label class="text-muted fw-700 x-small d-block mb-1 text-uppercase">Correo Estratégico</label>
+                        <div class="p-2 bg-light rounded-3 fw-700 text-dark text-truncate small d-flex align-items-center">
+                            <iconify-icon icon="solar:letter-bold-duotone" class="me-2 text-primary fs-18"></iconify-icon>
+                            {{ colaborador.user.email }}
+                        </div>
+                    </div>
+                    <h6 class="fw-800 text-dark mb-2 text-uppercase ls-1 small">Trayectoria</h6>
+                    <p class="text-muted lh-base mb-4 small" style="text-align: justify;">
+                        {{ colaborador.bio|default:"Consultor Jurídico senior en Ecuador." }}
+                    </p>
+                    {% if colaborador.hoja_vida %}
+                    <a href="{{ colaborador.hoja_vida.url }}" target="_blank" class="btn btn-dark w-100 py-2 rounded-pill fw-bold d-flex align-items-center justify-content-center shadow-sm small">
+                        <iconify-icon icon="solar:document-bold-duotone" class="me-2 fs-18"></iconify-icon> CURRICULUM VITAE
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-0 p-3">
+                    <ul class="nav nav-pills-luxury justify-content-center bg-light p-1 rounded-pill" role="tablist">
+                        <li class="nav-item flex-grow-1">
+                            <button class="nav-link w-100 active rounded-pill fw-700 py-2 small" data-bs-toggle="pill" data-bs-target="#tab-docs">
+                                <iconify-icon icon="solar:documents-bold-duotone" class="me-1"></iconify-icon> BÓVEDA
+                            </button>
+                        </li>
+                        <li class="nav-item flex-grow-1">
+                            <button class="nav-link w-100 rounded-pill fw-700 py-2 small" data-bs-toggle="pill" data-bs-target="#tab-notas">
+                                <iconify-icon icon="solar:notes-bold-duotone" class="me-1"></iconify-icon> NOTAS
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4 pt-0">
+                    <div class="tab-content">
+                        {# DOCUMENTOS #}
+                        <div class="tab-pane fade show active" id="tab-docs">
+                            {% if es_dueno %}
+                            <div class="upload-area p-3 mb-4 text-center border-dashed">
+                                <form method="post" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-center">
+                                    {% csrf_token %}
+                                    <div class="flex-grow-1 text-start w-100">
+                                        {{ doc_form.archivo }}
+                                    </div>
+                                    <button type="submit" name="subir_archivo" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold w-100 w-md-auto">Subir</button>
+                                </form>
+                            </div>
+                            {% endif %}
+
+                            <div class="d-flex flex-column gap-2">
+                                {% for doc in colaborador.documentos.all %}
+                                <div class="item-card-pro p-3 border d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center min-width-0">
+                                        <div class="item-icon-wrapper bg-soft-primary d-flex align-items-center justify-content-center" style="min-width:44px; height:44px; border-radius: 12px;">
+                                            <iconify-icon icon="solar:file-bold-duotone" class="text-primary fs-22"></iconify-icon>
+                                        </div>
+                                        <div class="ms-3 overflow-hidden">
+                                            <h6 class="fw-700 text-dark text-truncate mb-0 small file-name-text">{{ doc.archivo.name|slice:"11:" }}</h6>
+                                            <span class="x-small text-muted fw-500">{{ doc.fecha_creacion|date:"d M, Y" }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="action-group d-flex gap-2 ms-2">
+                                        <a href="{{ doc.archivo.url }}" target="_blank" class="btn-action-view" title="Ver"><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon></a>
+                                        {% if es_dueno %}
+                                        <form method="post" onsubmit="return confirm('¿Eliminar?');" class="m-0">
+                                            {% csrf_token %}<input type="hidden" name="doc_id" value="{{ doc.id }}">
+                                            <button type="submit" name="eliminar_archivo" class="btn-action-delete"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-5 text-muted small">Sin archivos registrados.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {# NOTAS #}
+                        <div class="tab-pane fade" id="tab-notas">
+                            {% if es_dueno %}
+                            <button class="btn btn-dark btn-sm rounded-pill px-4 mb-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalNota">+ Nueva Nota</button>
+                            {% endif %}
+                            <div class="row g-3">
+                                {% for nota in colaborador.notas_keep.all %}
+                                <div class="col-md-6">
+                                    <div class="item-card-pro p-3 border flex-column align-items-start" style="border-left: 5px solid {{ nota.color|default:'#000' }} !important;">
+                                        <div class="d-flex justify-content-between w-100 mb-2">
+                                            <h6 class="fw-800 text-dark mb-0 small">{{ nota.titulo }}</h6>
+                                            {% if es_dueno %}
+                                            <form method="post" class="m-0">
+                                                {% csrf_token %}<input type="hidden" name="nota_id" value="{{ nota.id }}">
+                                                <button type="submit" name="eliminar_nota" class="btn-action-delete-small"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon></button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted mb-0 x-small lh-sm">{{ nota.contenido|truncatechars:120 }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# MODAL NOTA #}
+<div class="modal fade" id="modalNota" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-800">Nota Estratégica</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">{{ nota_form.as_p }}</div>
+                <div class="modal-footer border-0">
+                    <button type="submit" name="crear_nota" class="btn btn-primary rounded-pill px-4 fw-bold">Guardar Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock page_content %}
+
+{% block extra_css %}
+<style>
+    .fw-300 { font-weight: 300; } .fw-500 { font-weight: 500; } .fw-600 { font-weight: 600; } .fw-700 { font-weight: 700; } .fw-800 { font-weight: 800; }
+    .x-small { font-size: 0.72rem; } .ls-1 { letter-spacing: 0.5px; }
+
+    .avatar-container { margin-top: -110px; position: relative; z-index: 10; }
+    .profile-avatar-img { width: 160px; height: 160px; object-fit: cover; background-color: white; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .status-indicator { position: absolute; bottom: 12px; right: 12px; width: 22px; height: 22px; border: 4px solid #fff; border-radius: 50%; }
+
+    .metric-card { border-radius: 24px; transition: 0.3s; border: 1px solid rgba(0,0,0,0.05) !important; }
+
+    /* TARJETA BANDERS INFINITE PREMIUM */
+    .card-infinite-bg {
+        background: linear-gradient(135deg, #1c2230 0%, #11151f 100%);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+        position: relative;
+    }
+    .chip-gold {
+        width: 48px;
+        height: 35px;
+        background: linear-gradient(135deg, #e5c06d 0%, #b88a44 100%);
+        border-radius: 8px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .item-card-pro { background: #fff; border-radius: 18px !important; transition: 0.3s; }
+    .btn-blur { background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+    .badge-premium { background: white; border-radius: 50px; font-size: 0.72rem; border: 1px solid #e2e8f0; color: #475569; }
+    .nav-pills-luxury .nav-link { color: #64748b; font-size: 0.75rem; font-weight: 700; }
+    .nav-pills-luxury .nav-link.active { background: #020617 !important; color: #fff !important; }
+    .btn-action-view, .btn-action-delete { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 19px; border: none; }
+    .btn-action-view { background-color: #f8fafc; color: #475569; }
+    .btn-action-delete { background-color: rgba(239, 68, 68, 0.08); color: #ef4444; }
+    .btn-action-delete-small { border: none; background: transparent; color: #ef4444; font-size: 18px; opacity: 0.7; }
+    .border-dashed { border: 2px dashed #e2e8f0; border-radius: 20px; background: #f8fafc; }
+
+    @media (max-width: 767.98px) {
+        .avatar-container { margin-top: -85px; }
+        .profile-avatar-img { width: 130px; height: 130px; }
+        .item-card-pro { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+    }
+</style>
+{% endblock extra_css %}

@@ -1,0 +1,297 @@
+{% extends "vertical.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
+<style>
+    :root {
+        --lh-primary: #0061ff;
+        --lh-dark: #020617;
+        --lh-text-main: #1e293b;
+        --lh-text-muted: #475569;
+        --lh-border: #e2e8f0;
+        --lh-selected-bg: #f0f7ff; /* Color de selección suave */
+    }
+
+    body {
+        background: radial-gradient(at 0% 0%, #f8fafc 0, transparent 50%),
+                    radial-gradient(at 100% 0%, #eff6ff 0, transparent 50%);
+        background-color: #fbfcfe;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: var(--lh-text-main);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .lh-title {
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--lh-dark);
+    }
+
+    .sharp-text {
+        color: var(--lh-text-muted) !important;
+        font-weight: 500;
+        font-size: 0.82rem;
+        letter-spacing: 0.01em;
+    }
+
+    /* Bento Grid */
+    .bento-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--lh-border);
+        border-radius: 28px;
+        padding: 30px;
+        transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .bento-card:hover {
+        border-color: var(--lh-primary);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.04);
+    }
+
+    /* TABLA LUXURY CON EFECTO DE SELECCIÓN */
+    .table-luxury tbody tr {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent; /* Reserva espacio para el borde de selección */
+    }
+
+    .table-luxury tbody tr:hover {
+        background-color: rgba(0, 97, 255, 0.03);
+    }
+
+    /* Clase activa para la selección del cliente */
+    .table-luxury tbody tr.selected-row {
+        background-color: var(--lh-selected-bg) !important;
+        border-left: 4px solid var(--lh-primary);
+    }
+
+    .table-luxury thead th {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        color: var(--lh-text-muted);
+        border: none;
+    }
+
+    /* VISA CARD INFINITE */
+    .credit-card-wrap { perspective: 1000px; }
+    .visa-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%);
+        border-radius: 22px;
+        padding: 28px;
+        color: white;
+        position: relative;
+        transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        height: 230px;
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .credit-card-wrap:hover .visa-card { transform: rotateY(10deg) rotateX(5deg); }
+
+    .card-chip {
+        width: 42px; height: 32px;
+        background: linear-gradient(135deg, #d4af37 0%, #f9e29c 50%, #b8860b 100%);
+        border-radius: 6px; border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .card-number {
+        font-family: 'Courier New', monospace;
+        font-size: 1.7rem; letter-spacing: 3px; font-weight: 700;
+        margin-top: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .stat-badge { font-size: 0.7rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; }
+
+    /* AGENDA STYLES */
+    .date-row {
+        display: flex; align-items: center; padding: 14px; margin-bottom: 10px;
+        background: #f8fafc; border-radius: 16px; transition: 0.3s;
+    }
+    .date-row:hover { background: #ffffff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .date-icon {
+        width: 45px; height: 45px; background: var(--lh-dark); color: white;
+        border-radius: 12px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; font-weight: 800; line-height: 1;
+    }
+</style>
+{% endblock extra_css%}
+
+{% block page_content %}
+<div class="container-fluid py-5 px-md-5">
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-7">
+            <span class="stat-badge bg-primary-subtle text-primary mb-2 d-inline-block">DASHBOARD CORE V2.6</span>
+            <h1 class="lh-title mb-1">Bienvenido, Dr. {{ nombre_abogado }}</h1>
+            <p class="sharp-text">Supervisión en tiempo real de activos y expedientes.</p>
+        </div>
+        <div class="col-lg-5 text-lg-end">
+            <button class="btn btn-white border rounded-pill px-4 py-2 fw-bold shadow-sm me-2" data-bs-toggle="offcanvas" data-bs-target="#agendaCanvas">
+                <i class="ri-calendar-line me-1"></i>Agenda
+            </button>
+            <a href="{% url 'expedientes:lista_expedientes' %}" class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-lg">
+                Nuevo Expediente
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="bento-card">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6 class="sharp-text text-uppercase m-0">Expedientes Totales</h6>
+                            <span class="stat-badge bg-success-subtle text-success">+{{ casos_nuevos_mes }}</span>
+                        </div>
+                        <div class="h2 fw-800 text-dark mb-0">{{ total_casos }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="bento-card">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6 class="sharp-text text-uppercase m-0">Cartera de Clientes</h6>
+                            <i class="ri-user-star-line text-muted"></i>
+                        </div>
+                        <div class="h2 fw-800 text-dark mb-0">{{ total_clientes }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <h5 class="lh-title mb-4">Movimientos Recientes</h5>
+                <div class="table-responsive">
+                    <table class="table table-luxury align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-0">Titular / Fecha</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for caso in casos_recientes %}
+                            <tr onclick="selectRow(this)">
+                                <td class="ps-0 py-3">
+                                    <div class="fw-800 text-dark" style="font-size: 0.95rem;">{{ caso.cliente.nombre }} {{ caso.cliente.apellido }}</div>
+                                    <div class="sharp-text" style="font-size: 0.75rem;">Apertura: {{ caso.fecha_inicio|date:"d M, Y" }}</div>
+                                </td>
+                                <td>
+                                    <span class="stat-badge bg-primary-subtle text-primary">
+                                        {{ caso.get_estado_display|upper }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'clientes:detail' caso.cliente.id %}" class="btn btn-light btn-sm rounded-pill fw-bold px-3">
+                                        Detalles
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-4 sharp-text">No hay actividad reciente.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="credit-card-wrap mb-4">
+                <div class="visa-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="card-chip"></div>
+                        <div class="visa-brand">BANDERS <span class="fw-300" style="font-size: 0.7rem;">INFINITE</span></div>
+                    </div>
+                    <div>
+                        <div class="small fw-600 opacity-50 mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">TOTAL RECAUDADO</div>
+                        <div class="card-number">${{ total_recaudado|floatformat:0 }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-end">
+                        <div><div class="card-holder">DR. {{ nombre_abogado }}</div></div>
+                        <div class="text-end">
+                            <div class="fw-bold text-danger" style="font-size: 0.9rem;">
+                                <span class="opacity-50 fw-normal" style="font-size: 0.6rem;">PENDIENTE:</span> ${{ total_por_cobrar|floatformat:0 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <h6 class="lh-title mb-4">Agenda Próxima</h6>
+                {% for aud in audiencias_proximas %}
+                <div class="date-row">
+                    <div class="date-icon">
+                        <span style="font-size: 0.55rem; opacity: 0.7;">{{ aud.fecha_inicio|date:"M"|upper }}</span>
+                        <span style="font-size: 1rem;">{{ aud.fecha_inicio|date:"d" }}</span>
+                    </div>
+                    <div class="ms-3 overflow-hidden">
+                        <div class="fw-700 text-dark text-truncate small">{{ aud.titulo }}</div>
+                        <div class="sharp-text" style="font-size: 0.7rem;">
+                            {{ aud.fecha_inicio|date:"H:i" }} • {{ aud.expediente.cliente.nombre }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center sharp-text py-3">Sin citas pendientes.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="agendaCanvas" style="width: 500px; border-radius: 30px 0 0 30px; border: none;">
+    <div class="offcanvas-header p-4">
+        <h5 class="lh-title mb-0">Calendario Judicial</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div id="calendar-main" class="p-2"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_javascript %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
+<script>
+    // Función para resaltar la fila al hacer clic
+    function selectRow(element) {
+        // Eliminar clase de todas las filas
+        const rows = document.querySelectorAll('.table-luxury tbody tr');
+        rows.forEach(row => row.classList.remove('selected-row'));
+
+        // Añadir clase a la fila actual
+        element.classList.add('selected-row');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicialización de Calendario
+        const calendarEl = document.getElementById('calendar-main');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+            events: {{ eventos_json|safe|default:"[]" }},
+            height: 'auto'
+        });
+
+        document.getElementById('agendaCanvas').addEventListener('shown.bs.offcanvas', () => {
+            calendar.render();
+            calendar.updateSize();
+        });
+    });
+</script>
+{% endblock %}

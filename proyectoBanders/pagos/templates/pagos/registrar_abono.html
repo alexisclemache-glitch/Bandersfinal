@@ -1,0 +1,145 @@
+{% extends "vertical.html" %}
+
+{% block page_content %}
+<div class="container pt-5">
+    <div class="card border-0 shadow-lg mx-auto" style="max-width: 480px; border-radius: 24px; background: #ffffff;">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background-color: rgba(94, 92, 230, 0.1);">
+                        <i class="ri-shield-user-line fs-3" style="color: #5e5ce6;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Registrar Abono</h5>
+                        <p class="text-muted small mb-0">Cajero: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 16px;">
+                <p class="text-muted small mb-1 fw-bold text-uppercase">Cliente</p>
+                <h6 class="fw-bold text-dark mb-3">{{ pago.expediente.cliente.nombre }} {{ pago.expediente.cliente.apellido }}</h6>
+
+                <div class="bg-white p-3 rounded-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-muted fw-bold">SALDO PENDIENTE:</span>
+                        <span class="fw-extrabold text-primary" style="font-size: 1.2rem;">${{ pago.saldo_pendiente|floatformat:"0" }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: 70%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" id="pagoForm">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">MONTO A INGRESAR ($)</label>
+                    <input type="number" name="monto" id="inputMonto" step="1"
+                           class="form-control form-control-lg bg-light border-0 fw-bold"
+                           placeholder="0" required style="border-radius: 12px; font-size: 1.5rem; color: #5e5ce6;">
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted" style="font-size: 0.7rem;">Solo números enteros.</small>
+                        <small id="errorMonto" class="text-danger fw-bold d-none" style="font-size: 0.7rem;">Monto excede el saldo</small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted">MÉTODO DE PAGO</label>
+                    <select name="metodo_pago" class="form-select border-0 bg-light py-2" style="border-radius: 12px; font-weight: 600;">
+                        <option value="Transferencia">🏦 Transferencia Bancaria</option>
+                        <option value="Efectivo" selected>💵 Efectivo</option>
+                        <option value="Tarjeta">💳 Tarjeta Crédito/Débito</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="btnConfirmar" class="btn btn-primary w-100 py-3 fw-bold shadow-sm"
+                        style="background-color: #5e5ce6; border:none; border-radius: 15px;">
+                    <i class="ri-whatsapp-line me-2"></i> Confirmar y Notificar
+                </button>
+
+                <a href="{% url 'pagos:lista_pagos' %}" class="btn btn-link w-100 mt-2 text-muted text-decoration-none small">
+                    Cancelar operación
+                </a>
+            </form>
+
+            <div class="mt-5">
+                <h6 class="fw-bold text-muted small mb-3 text-uppercase"><i class="ri-history-line me-1"></i> Abonos Recientes</h6>
+                <div class="vstack gap-2">
+                    {% for abono in pago.abonos.all %}
+                    <div class="p-2 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="d-block fw-bold text-dark small">${{ abono.monto|floatformat:"0" }}</span>
+                            <small class="text-muted" style="font-size: 0.7rem;">Por: {{ abono.usuario_creador.username }}</small>
+                        </div>
+                        <span class="badge bg-white text-muted border fw-normal" style="font-size: 0.65rem;">{{ abono.fecha_abono|date:"d/m/Y" }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted small italic">No hay abonos previos.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock page_content %}
+
+{% block extra_javascript %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pagoForm = document.getElementById('pagoForm');
+        const inputMonto = document.getElementById('inputMonto');
+        const btnConfirmar = document.getElementById('btnConfirmar');
+        const errorMonto = document.getElementById('errorMonto');
+
+        const saldoMax = parseFloat("{{ pago.saldo_pendiente|floatformat:'0' }}");
+
+        // VALIDACIÓN DE MONTO
+        inputMonto.addEventListener('input', function() {
+            if (parseFloat(this.value) > saldoMax) {
+                errorMonto.classList.remove('d-none');
+                btnConfirmar.disabled = true;
+                btnConfirmar.style.opacity = '0.5';
+            } else {
+                errorMonto.classList.add('d-none');
+                btnConfirmar.disabled = false;
+                btnConfirmar.style.opacity = '1';
+            }
+        });
+
+        // LÓGICA DE WHATSAPP AL ENVIAR
+        pagoForm.addEventListener('submit', function(e) {
+            // Captura de datos
+            const monto = inputMonto.value;
+            const cliente = "{{ pago.expediente.cliente.nombre }} {{ pago.expediente.cliente.apellido }}";
+            const colaborador = "{{ request.user.get_full_name|default:request.user.username }}";
+            const saldoFinal = saldoMax - parseFloat(monto);
+
+            // Limpieza de teléfono (Elimina espacios y caracteres raros)
+            let telefono = "{{ pago.expediente.cliente.telefono }}".replace(/\D/g,'');
+
+            // Si el teléfono no tiene código de país, podrías añadirlo manualmente (ej: 593 para Ecuador)
+            // if (telefono.length === 9) telefono = "593" + telefono;
+
+            const mensaje = `*RECIBO DE PAGO - BANDERS*%0A%0A` +
+                            `Hola *${cliente}*, se ha registrado su abono de: *Dólares ${monto}*%0A` +
+                            `*Saldo pendiente:* $${saldoFinal}%0A` +
+                            `*Recibido por:* ${colaborador}%0A%0A` +
+                            `_Gracias por su pago._`;
+
+            const urlWs = `https://api.whatsapp.com/send?phone=${telefono}&text=${mensaje}`;
+
+            // Abrimos WhatsApp en nueva ventana
+            window.open(urlWs, '_blank');
+        });
+
+        // Bloqueo de puntos y comas
+        inputMonto.addEventListener('keydown', function(e) {
+            if (['.', ',', 'e', '-', '+'].includes(e.key)) { e.preventDefault(); }
+        });
+    });
+</script>
+{% endblock extra_javascript %}
