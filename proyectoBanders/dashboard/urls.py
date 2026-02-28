@@ -1,9 +1,10 @@
-# dashboard/urls.py
 from django.urls import path
 from .views import DashboardView
 
-app_name = 'dashboard' # Este es el namespace
+# El app_name debe coincidir con el namespace que pusiste en el urls.py principal
+app_name = 'dashboard'
 
 urlpatterns = [
-    path('', DashboardView.as_view(), name='dashboard'), # Este es el name
+    # Al dejar el string vacío '', esta es la ruta raíz de la app
+    path('', DashboardView.as_view(), name='dashboard'),
 ]
