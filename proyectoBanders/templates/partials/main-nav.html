@@ -1,0 +1,146 @@
+{% load static i18n %}
+
+<div class="main-nav">
+    <div class="logo-box text-center py-3" style="background: rgba(0,0,0,0.1);">
+        <a href="{% url 'dashboard:dashboard' %}" class="logo-dark">
+            <img src="{% static 'images/logo-sm.png' %}" style="height: 30px; width: auto;" alt="logo sm">
+            <img src="{% static 'images/logo-dark.png' %}" style="height: 40px; width: auto;" class="ms-1" alt="logo dark">
+        </a>
+        <a href="{% url 'dashboard:dashboard' %}" class="logo-light d-flex justify-content-center align-items-center w-100">
+            <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" 
+                 style="height: 42px !important; width: auto !important; max-width: 160px;" 
+                 class="auth-logo-img">
+        </a>
+    </div>
+
+    <button type="button" class="button-sm-hover" aria-label="Show Full Sidebar">
+        <i class="ri-menu-2-line fs-24 button-sm-hover-icon"></i>
+    </button>
+
+    <div class="scrollbar" data-simplebar>
+        <div class="nav-item mb-4 mt-2 text-center" style="list-style: none;">
+            <div class="d-block">
+                <div class="position-relative d-inline-block">
+                    <a href="{% url 'abogados:perfil_detail' user.perfil.pk %}">
+                        {% if user.perfil.foto %}
+                            <img src="{{ user.perfil.foto.url }}"
+                                 class="rounded-circle border border-2 border-primary shadow-sm"
+                                 style="object-fit: cover; width: 75px; height: 75px;">
+                        {% else %}
+                            <img src="{% static 'images/users/user-dummy.jpg' %}"
+                                 class="rounded-circle border shadow-sm"
+                                 style="object-fit: cover; width: 75px; height: 75px;">
+                        {% endif %}
+                    </a>
+                    <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-2 border-white rounded-circle"></span>
+                </div>
+
+                <h5 class="mt-2 mb-0 fw-bold text-white" style="font-size: 15px;">{{ user.get_full_name|default:user.username }}</h5>
+                <p class="fs-12 mb-0" style="color: rgba(255,255,255,0.7) !important;">
+                    {{ user.perfil.especialidad|default:"Abogado Jurídico" }}
+                </p>
+            </div>
+        </div>
+
+        <ul class="navbar-nav" id="navbar-nav">
+            <li class="menu-title"><span style="color: rgba(255,255,255,0.5); font-size: 11px; text-transform: uppercase;">Gestión Jurídica</span></li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashboard:dashboard' %}">
+                    <span class="nav-icon"><i class="ri-dashboard-2-line"></i></span>
+                    <span class="nav-text"> Dashboard </span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarAbogados" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-scales-3-line"></i></span>
+                    <span class="nav-text"> Abogados </span>
+                </a>
+                <div class="collapse" id="sidebarAbogados">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link text-primary fw-bold" href="{% url 'abogados:perfil_detail' user.perfil.pk %}">Mi Perfil</a>
+                        </li>
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link" href="{% url 'abogados:colaboradores_list' %}">Ver Directorio</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarCustomers" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-contacts-book-3-line"></i></span>
+                    <span class="nav-text"> Clientes </span>
+                </a>
+                <div class="collapse" id="sidebarCustomers">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'clientes:list' %}">Lista de Clientes</a></li>
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'clientes:create' %}">Añadir Cliente</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarCasos" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-briefcase-4-line"></i></span>
+                    <span class="nav-text"> Casos </span>
+                </a>
+                <div class="collapse" id="sidebarCasos">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'expedientes:lista_expedientes' %}">Ver Expedientes</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarAudiencias" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-calendar-todo-line"></i></span>
+                    <span class="nav-text"> Audiencias </span>
+                </a>
+                <div class="collapse" id="sidebarAudiencias">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'audiencias:calendario' %}">Calendario Judicial</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarPagos" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-money-dollar-box-line"></i></span>
+                    <span class="nav-text"> Pagos </span>
+                </a>
+                <div class="collapse" id="sidebarPagos">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'pagos:lista_pagos' %}">Gestión de Cobros</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="menu-title mt-2"><span style="color: #007bff; font-size: 11px; text-transform: uppercase;">Inteligencia Artificial</span></li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'asistente_ia:inbox_ia' %}">
+                    <span class="nav-icon">
+                        <iconify-icon icon="solar:magic-stick-3-bold-duotone" class="fs-22 text-primary"></iconify-icon>
+                    </span>
+                    <span class="nav-text fw-bold"> Asistente Gemini </span>
+                    <span class="badge bg-primary text-white ms-auto">PRO</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link menu-arrow" href="#sidebarNotebooks" data-bs-toggle="collapse" role="button">
+                    <span class="nav-icon"><i class="ri-book-open-line"></i></span>
+                    <span class="nav-text"> Notebooks IA </span>
+                </a>
+                <div class="collapse" id="sidebarNotebooks">
+                    <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'asistente_ia:inbox_ia' %}">Ver Mis Escritos</a></li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

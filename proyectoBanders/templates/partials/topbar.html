@@ -1,0 +1,123 @@
+{% load static i18n %}
+
+<header>
+    <div class="topbar">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="topbar-item">
+                        <button type="button" class="button-toggle-menu topbar-button">
+                            <i class="ri-menu-2-line fs-24"></i>
+                        </button>
+                    </div>
+
+                    <form action="{% url 'busqueda:realizar_busqueda' %}" method="GET" class="app-search d-none d-md-block me-auto">
+                        <div class="position-relative">
+                            <input type="search" name="q" class="form-control border-0" placeholder="Buscar por nombre, RUT o caso..." autocomplete="off" value="{{ query|default:'' }}">
+                            <i class="ri-search-line search-widget-icon"></i>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="d-flex align-items-center gap-1">
+                    <div class="topbar-item">
+                        <button type="button" class="topbar-button" id="light-dark-mode">
+                            <i class="ri-moon-line fs-24 light-mode"></i>
+                            <i class="ri-sun-line fs-24 dark-mode"></i>
+                        </button>
+                    </div>
+
+                    <div class="dropdown topbar-item">
+                        <button type="button" class="topbar-button position-relative" id="page-header-notifications-dropdown" data-bs-toggle="dropdown">
+                            <i class="ri-notification-3-line fs-24"></i>
+                            {% if notificaciones_audiencias %}
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge bg-danger rounded-pill">
+                                    {{ notificaciones_audiencias.count }}
+                                </span>
+                            {% endif %}
+                        </button>
+                        <div class="dropdown-menu py-0 dropdown-lg dropdown-menu-end shadow-lg border-0">
+                            <div class="p-3 border-bottom border-dashed bg-light">
+                                <h6 class="m-0 fs-16 fw-semibold">Agenda del Consorcio (Próximas)</h6>
+                            </div>
+                            <div data-simplebar style="max-height: 350px;">
+                                {% if notificaciones_audiencias %}
+                                    {% for audiencia in notificaciones_audiencias %}
+                                        <div class="dropdown-item py-3 border-bottom">
+                                            <div class="d-flex text-reset align-items-center">
+                                                <div class="avatar-sm me-2">
+                                                    <span class="avatar-title {{ audiencia.color_categoria|default:'bg-primary' }} text-white fs-14 rounded-circle">
+                                                        {% if audiencia.usuarios_asignados.exists %}
+                                                            {{ audiencia.usuarios_asignados.first.first_name|slice:":1"|upper }}
+                                                        {% else %}
+                                                            <i class="ri-user-search-line"></i>
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <p class="mb-0 fw-semibold text-truncate">Exp: {{ audiencia.expediente.numero_expediente|default:audiencia.titulo }}</p>
+
+                                                    <p class="mb-0 text-muted small text-truncate">
+                                                        Abg:
+                                                        {% with abogado=audiencia.usuarios_asignados.first %}
+                                                            {% if abogado %}
+                                                                {{ abogado.get_full_name|default:abogado.username }}
+                                                            {% else %}
+                                                                <span class="text-warning">Sin abogado asignado</span>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </p>
+
+                                                    <small class="text-danger fw-bold">
+                                                        <i class="ri-time-line me-1"></i>{{ audiencia.fecha_inicio|date:"d/m H:i" }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="ri-notification-off-line fs-32 text-muted opacity-50"></i>
+                                        <p class="text-muted mb-0 mt-2 small">No hay audiencias programadas</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-2 border-top text-center">
+                                <a href="{% url 'audiencias:calendario' %}" class="btn btn-sm btn-link fw-bold">Ver calendario completo</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown topbar-item">
+                        <a type="button" class="topbar-button" id="page-header-user-dropdown" data-bs-toggle="dropdown">
+                            <span class="d-flex align-items-center">
+                                {% if user.is_authenticated %}
+                                    {% if user.perfil and user.perfil.foto %}
+                                        <img class="rounded-circle" width="32" height="32" src="{{ user.perfil.foto.url }}" alt="Avatar" style="object-fit: cover;">
+                                    {% else %}
+                                        <img class="rounded-circle" width="32" src="{% static 'images/users/avatar-1.jpg' %}" alt="Avatar">
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <h6 class="dropdown-header">¡Hola, {{ user.first_name|default:user.username }}!</h6>
+                            <a class="dropdown-item" href="{% url 'abogados:perfil_detail' pk=user.pk %}">
+                                <i class="ri-user-line align-middle me-2 fs-18"></i>
+                                <span>Mi Perfil</span>
+                            </a>
+                            <div class="dropdown-divider my-1"></div>
+                            <form id="logout-form" action="{% url 'usuarios:logout' %}" method="post" style="display: none;">
+                                {% csrf_token %}
+                            </form>
+                            <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="document.getElementById('logout-form').submit();">
+                                <i class="ri-logout-box-line align-middle me-2 fs-18"></i>
+                                <span>Cerrar Sesión</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,73 @@
+{% extends "vertical.html" %}
+{% load static i18n %}
+
+{% block title %}Confirmar Eliminación | {{ object.nombre }}{% endblock title %}
+
+{% block page_title %}
+    {% include 'partials/page-title.html' with title='Clientes' subtitle='Eliminar Cliente' %}
+{% endblock page_title %}
+
+{% block page_content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                {# HEADER CON ESTILO DE ADVERTENCIA #}
+                <div class="card-header bg-danger p-3">
+                    <div class="d-flex align-items-center justify-content-center text-white">
+                         <iconify-icon icon="solar:danger-triangle-bold" class="fs-24 me-2"></iconify-icon>
+                         <h5 class="mb-0 fw-bold">ELIMINACIÓN IRREVERSIBLE</h5>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 text-center">
+                    <div class="mb-4">
+                        {# Avatar o iniciales del cliente a eliminar para confirmación visual #}
+                        <div class="avatar-lg bg-soft-danger text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <span class="fs-1 fw-bold">{{ object.nombre|slice:":1" }}{{ object.apellido|slice:":1" }}</span>
+                        </div>
+                        <h4 class="fw-bold text-dark">¿Estás totalmente seguro?</h4>
+                        <p class="text-muted">Estás a punto de borrar permanentemente el expediente de:</p>
+                        <div class="p-3 bg-light rounded-3 mb-4">
+                            <h5 class="mb-1 fw-800 text-dark">{{ object.nombre }} {{ object.apellido }}</h5>
+                            <span class="badge bg-secondary px-3 rounded-pill">ID: {{ object.rut }}</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-soft-danger d-flex align-items-center text-start mb-4" role="alert">
+                        <iconify-icon icon="solar:info-circle-bold-duotone" class="fs-22 text-danger me-2"></iconify-icon>
+                        <div class="small">
+                            <strong>Nota importante:</strong> Se eliminarán también todos los documentos en bóveda, escritos procesales y notas de seguimiento vinculadas a este cliente.
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-sm-flex justify-content-center mt-4">
+                            {# Revisa si es 'detail' o 'details' según tus archivos anteriores #}
+                            <a href="{% url 'clientes:detail' object.pk %}" class="btn btn-light rounded-pill px-4 fw-bold order-2 order-sm-1">
+                                No, mantener cliente
+                            </a>
+                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-danger order-1 order-sm-2">
+                                <iconify-icon icon="solar:trash-bin-trash-bold" class="align-middle me-1"></iconify-icon>
+                                Sí, eliminar ahora
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'clientes:list' %}" class="text-muted small fw-bold text-decoration-none">
+                    <iconify-icon icon="solar:list-bold" class="align-middle"></iconify-icon> Volver al listado general
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page_content %}
+
+{# Bloque extra por si necesitas JS #}
+{% block extra_javascript %}
+{% endblock extra_javascript %}

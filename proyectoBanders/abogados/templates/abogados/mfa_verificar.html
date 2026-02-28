@@ -1,0 +1,91 @@
+{% extends "vertical.html" %}
+{% load static %}
+
+{% block title %} Verificación de Seguridad | Banders {% endblock %}
+
+{% block page_content %}
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <i class="ri-shield-keyhole-fill text-primary" style="font-size: 3.5rem;"></i>
+                </div>
+                
+                <h3 class="fw-bold text-dark mb-2">Verificación en dos pasos</h3>
+                <p class="text-muted mb-4">Proteja su cuenta de acceso legal con Google Authenticator.</p>
+
+                {% if not mfa_configurado %}
+                    <div class="alert alert-info border-0 rounded-3 small mb-4">
+                        <i class="ri-information-line me-1"></i>
+                        Escanee el código QR con su aplicación móvil para vincular su cuenta.
+                    </div>
+                    <div class="bg-light p-3 rounded-4 d-inline-block mb-4 border">
+                        <img src="{% url 'abogados:qr_code_image' %}" alt="Código QR" class="img-fluid" style="width: 200px; height: 200px;">
+                    </div>
+                {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %} border-0 small mb-3 shadow-sm" role="alert">
+                            <i class="ri-error-warning-line me-1"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" autocomplete="off">
+                    {% csrf_token %}
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-bold small text-uppercase ls-1">Código de 6 dígitos</label>
+                        <input type="text"
+                               name="otp_token"
+                               maxlength="6"
+                               class="form-control form-control-lg text-center fw-bold"
+                               placeholder="000 000"
+                               required
+                               style="letter-spacing: 10px; font-size: 1.5rem;"
+                               autofocus>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3 fw-bold py-3 shadow">
+                        Verificar Identidad
+                        <i class="ri-arrow-right-line ms-2"></i>
+                    </button>
+                </form>
+
+                <div class="mt-4 pt-2">
+                    <a href="{% url 'account_logout' %}" class="text-muted small text-decoration-none">
+                        <i class="ri-logout-box-r-line me-1"></i> Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-muted mt-4 small">
+            &copy; {% now "Y" %} Consorcio Jurídico Contable Banders | Soporte Legal
+        </p>
+    </div>
+</div>
+{% endblock page_content %}
+
+{% block extra_css %}
+<style>
+    .ls-1 { letter-spacing: 1px; }
+    .card { transition: transform 0.3s ease; }
+    .card:hover { transform: translateY(-5px); }
+    .form-control:focus {
+        border-color: #405189;
+        box-shadow: 0 0 0 0.25rem rgba(64, 81, 137, 0.1);
+    }
+    /* Estilo extra para que los mensajes se vean más premium */
+    .alert {
+        border-radius: 12px;
+        animation: fadeInDown 0.4s ease-out;
+    }
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock extra_css %}

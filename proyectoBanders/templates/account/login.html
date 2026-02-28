@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Iniciar Sesión | Banders" %}{% endblock title %}
+
+{% block content %}
+<div class="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="bg-overlay" style="background-color: #405189; opacity: 0.8; position: absolute; height: 100%; width: 100%; top:0; left:0; z-index: -1;"></div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+
+                <div class="text-center mb-4">
+                    <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" height="80" class="auth-logo-img">
+                </div>
+
+                <div class="card mt-2 shadow-lg border-0">
+                    <div class="card-body p-4">
+
+                        {# MANEJO DE MENSAJES Y ERRORES - Optimizado para Allauth v6 #}
+                        {% if messages or form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="ri-error-warning-line me-2"></i>
+                                {% if form.non_field_errors %}
+                                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                                {% elif form.errors %}
+                                    {% trans "Revisa tus credenciales e intenta de nuevo." %}
+                                {% elif messages %}
+                                    {% for message in messages %}{{ message }}{% endfor %}
+                                {% endif %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+
+                        <div class="text-center mt-2">
+                            <h5 class="text-danger fw-bold text-uppercase">Consorcio Jurídico Banders</h5>
+                            <p class="text-muted">Inicia sesión para continuar.</p>
+                        </div>
+
+                        <div class="p-2 mt-4">
+                            {# IMPORTANTE: En v6.0 es mejor omitir el 'action' o asegurar que apunte a account_login #}
+                            <form method="POST" action="{% url 'account_login' %}">
+                                {% csrf_token %}
+
+                                {# PERSISTENCIA: Activa SESSION_COOKIE_AGE de 30 días configurada en settings #}
+                                <input type="hidden" name="remember" value="true">
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="id_login">Correo electrónico</label>
+                                    <input type="email" name="login" id="id_login"
+                                           class="form-control {% if form.login.errors %}is-invalid{% endif %}"
+                                           placeholder="nombre@ejemplo.com" required
+                                           value="{{ form.login.value|default:'' }}" autofocus>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="float-end">
+                                        <a href="{% url 'account_reset_password' %}" class="text-muted small text-decoration-underline">¿Olvidaste tu contraseña?</a>
+                                    </div>
+                                    <label class="form-label" for="id_password">Contraseña</label>
+                                    <input type="password" name="password" id="id_password"
+                                           class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                                           placeholder="Tu contraseña" required>
+                                </div>
+
+                                {# INDICADOR MFA BANDERS #}
+                                <div class="text-center mb-4">
+                                    <span class="badge rounded-pill bg-soft-primary text-primary border shadow-sm px-3 py-2">
+                                        <i class="ri-shield-check-fill me-1"></i> Verificación en dos pasos activa
+                                    </span>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button class="btn btn-danger btn-lg w-100 fw-bold py-2 shadow-sm" type="submit">
+                                        ENTRAR <i class="ri-login-box-line ms-1"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0 text-white">¿No tienes cuenta?
+                        <a href="{% url 'account_signup' %}" class="fw-bold text-white text-decoration-underline">Regístrate</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,27 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .card { font-family: 'Segoe UI', sans-serif; max-width: 500px; margin: 20px auto; border: 1px solid #dcdcdc; border-radius: 8px; padding: 20px; text-align: center; }
+        .code { font-size: 35px; font-weight: bold; color: #1a237e; background-color: #f5f5f5; padding: 15px; display: inline-block; letter-spacing: 8px; border-radius: 4px; margin: 20px 0; }
+        .footer { font-size: 12px; color: #757575; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Banders Law Firm</h2>
+        <h3>Código de Verificación</h3>
+        {# Usamos force_str para asegurar que el nombre sea texto puro #}
+        <p>Hola <strong>{{ user.get_full_name|default:user.username }}</strong>,</p>
+        <p>Para completar su acceso al sistema de Banders, utilice el siguiente código de seguridad:</p>
+
+        <div class="code">{{ code }}</div>
+
+        <p>Este código expirará en 5 minutos.</p>
+        <div class="footer">
+            &copy; 2026 Consorcio Jurídico Contable Banders - Sistema de Gestión Segura.
+        </div>
+    </div>
+</body>
+</html>

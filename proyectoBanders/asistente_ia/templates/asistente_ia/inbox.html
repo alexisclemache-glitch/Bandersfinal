@@ -1,0 +1,279 @@
+{% extends "vertical.html" %}
+{% load static %}
+
+{% block page_content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<div class="ia-workspace">
+    <div class="row g-0 h-100">
+
+        <div class="col-md-3 d-none d-md-flex flex-column sidebar-professional no-print">
+            <div class="p-4 border-bottom bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="text-uppercase fw-bold ls-1 text-primary m-0" style="font-size: 11px;">Expedientes Digitales</h6>
+                    <span class="badge bg-light text-dark border fw-normal">{{ notebooks|length }}</span>
+                </div>
+                <p class="text-muted small m-0">Historial de análisis IA</p>
+            </div>
+
+            <div class="flex-grow-1 overflow-auto p-3 custom-scroll" id="historial-lista">
+                {% for notebook in notebooks %}
+                <div class="history-card mb-3 animate__animated animate__fadeIn"
+                     onclick="cargarEscrito('{{ notebook.titulo_caso|escapejs }}', '{{ notebook.contenido_escrito|escapejs }}')">
+                    <div class="card-body-legal">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="icon-box-card">
+                                <i class="ri-scales-2-line"></i>
+                            </div>
+                            <button class="btn-delete-card" onclick="event.stopPropagation(); eliminarRegistro('{{ notebook.id }}')" title="Eliminar registro">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                        <h6 class="card-title-legal text-truncate">{{ notebook.titulo_caso }}</h6>
+                        <div class="card-footer-legal">
+                            <span><i class="ri-calendar-event-line me-1"></i> {{ notebook.fecha_creacion|date:"d M, Y" }}</span>
+                            <span class="ms-auto"><i class="ri-arrow-right-up-line"></i> Abrir</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center mt-5 opacity-50">
+                    <i class="ri-inbox-archive-line fs-1"></i>
+                    <p class="small mt-2">No hay expedientes guardados</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-9 d-flex flex-column h-100 bg-white">
+            <div class="header-minimal px-4 no-print">
+                <div class="d-flex align-items-center">
+                    <div class="ai-badge-modern me-3">
+                        <i class="ri-robot-2-fill"></i>
+                    </div>
+                    <div>
+                        <h6 class="m-0 fw-bold">Banders AI <span class="text-primary" style="font-size: 10px;">PRO</span></h6>
+                        <small class="text-muted">Análisis jurídico de alta precisión (Gemini 2.5)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat-window" class="flex-grow-1 p-4 p-lg-5 overflow-auto bg-light-subtle d-flex flex-column">
+                <div class="welcome-section text-center my-auto animate__animated animate__fadeIn no-print">
+                    <div class="mb-4">
+                        <div class="icon-circle-large mx-auto">
+                            <i class="ri-shake-hands-line"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold text-dark">Centro de Inteligencia Jurídica</h4>
+                    <p class="text-muted mx-auto" style="max-width: 450px;">
+                        Selecciona un expediente o inicia una nueva consulta cargando un archivo o escribiendo tu requerimiento legal.
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-top no-print">
+                <div class="max-width-chat mx-auto">
+
+                    <div id="file-preview-container" class="d-none mb-3">
+                        <div class="file-card-preview border-primary-subtle p-2 bg-light rounded d-flex align-items-center">
+                            <i class="ri-file-search-line fs-3 text-primary me-3"></i>
+                            <div class="flex-grow-1">
+                                <div id="file-name" class="fw-bold small text-dark"></div>
+                                <div class="text-muted small">Documento listo para análisis</div>
+                            </div>
+                            <i class="ri-close-line fs-4 cursor-pointer text-danger" onclick="cancelarArchivo()" style="cursor:pointer;"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-container-premium">
+                        <button class="btn-attach-premium" onclick="document.getElementById('file-input').click()" title="Adjuntar documento">
+                            <i class="ri-add-line"></i>
+                        </button>
+                        <input type="file" id="file-input" class="d-none" onchange="manejarArchivo()" accept=".pdf,.doc,.docx,.jpg,.png">
+
+                        <textarea id="user-prompt" class="textarea-premium" rows="1" placeholder="Describe el caso o consulta..." oninput="autoGrow(this)"></textarea>
+
+                        <button class="btn-send-premium" onclick="enviarAGemini()" id="btn-enviar">
+                            <i class="ri-sparkling-fill me-2"></i> Procesar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* --- ESTILOS MEJORADOS --- */
+.ia-workspace { height: calc(100vh - 70px); background: #fff; font-family: 'Inter', sans-serif; overflow: hidden; }
+.sidebar-professional { background: #fcfcfd; border-right: 1px solid #f0f0f2 !important; }
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+.history-card {
+    background: #ffffff; border: 1px solid #ececf1; border-radius: 12px;
+    padding: 16px; cursor: pointer; transition: all 0.25s ease;
+}
+.history-card:hover { border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(37, 99, 235, 0.08); }
+
+.icon-box-card { width: 32px; height: 32px; background: #eff6ff; color: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.card-title-legal { font-size: 13.5px; font-weight: 600; color: #1e293b; margin-top: 10px; margin-bottom: 12px; }
+
+.btn-delete-card { border: none; background: transparent; color: #cbd5e1; transition: 0.2s; }
+.btn-delete-card:hover { color: #ef4444; }
+
+.header-minimal { height: 70px; border-bottom: 1px solid #f0f0f2; }
+.ai-badge-modern { width: 38px; height: 38px; background: #1e293b; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+
+.user-bubble { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 12px 18px; border-radius: 16px 16px 2px 16px; align-self: flex-end; max-width: 80%; margin-bottom: 24px; font-size: 14.5px; }
+
+.ai-response-card { background: white; padding: 32px; border-radius: 16px; border: 1px solid #f1f5f9; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); position: relative; }
+
+.input-container-premium { background: #fff; border-radius: 16px; padding: 10px 15px; display: flex; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+.textarea-premium { border: none; flex-grow: 1; padding: 8px 12px; outline: none; font-size: 15px; resize: none; max-height: 200px; }
+
+.btn-attach-premium { background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 10px; color: #64748b; margin-right: 10px; }
+.btn-send-premium { background: #2563eb; color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 600; transition: 0.2s; }
+.btn-send-premium:hover { background: #1d4ed8; }
+
+.icon-circle-large { width: 80px; height: 80px; background: #f0f7ff; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+
+@media print {
+    .no-print { display: none !important; }
+    body { background: white; }
+    .ai-response-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+}
+</style>
+
+<script>
+    let ultimaRespuestaAI = "";
+    let archivoSeleccionado = null;
+
+    function autoGrow(element) {
+        element.style.height = "5px";
+        element.style.height = (element.scrollHeight) + "px";
+    }
+
+    function manejarArchivo() {
+        const input = document.getElementById('file-input');
+        if (input.files.length > 0) {
+            archivoSeleccionado = input.files[0];
+            document.getElementById('file-name').innerText = archivoSeleccionado.name;
+            document.getElementById('file-preview-container').classList.remove('d-none');
+        }
+    }
+
+    function cancelarArchivo() {
+        archivoSeleccionado = null;
+        document.getElementById('file-input').value = "";
+        document.getElementById('file-preview-container').classList.add('d-none');
+    }
+
+    function cargarEscrito(titulo, contenido) {
+        const chat = document.getElementById('chat-window');
+        document.querySelector('.welcome-section')?.remove();
+
+        chat.innerHTML += `
+            <div class="user-bubble no-print">
+                <i class="ri-folder-open-line me-2 text-primary"></i> <strong>Recuperado:</strong> ${titulo}
+            </div>
+            <div class="ai-response-card animate__animated animate__fadeIn">
+                <div class="contenido-legal-render">${contenido}</div>
+                <div class="mt-4 border-top pt-3 text-end no-print">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="window.print()">
+                        <i class="ri-printer-line me-1"></i> Imprimir Borrador
+                    </button>
+                </div>
+            </div>`;
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function enviarAGemini() {
+        const promptInput = document.getElementById('user-prompt');
+        const btn = document.getElementById('btn-enviar');
+        const chat = document.getElementById('chat-window');
+        const prompt = promptInput.value;
+
+        if (!prompt && !archivoSeleccionado) return;
+
+        // Remover bienvenida si existe
+        document.querySelector('.welcome-section')?.remove();
+
+        // Agregar burbuja de usuario
+        chat.innerHTML += `<div class="user-bubble no-print">${prompt || 'Analizando archivo adjunto...'}</div>`;
+
+        // Estado cargando
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Procesando...`;
+
+        let formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        if (archivoSeleccionado) formData.append('archivo', archivoSeleccionado);
+
+        try {
+            const resp = await fetch("{% url 'asistente_ia:generar_escrito_gemini' %}", {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await resp.json();
+
+            if (data.status === 'success') {
+                ultimaRespuestaAI = data.respuesta;
+                chat.innerHTML += `
+                    <div class="ai-response-card animate__animated animate__fadeInUp">
+                        <div class="contenido-legal-render">${data.respuesta}</div>
+                        <div class="mt-4 border-top pt-3 d-flex justify-content-between no-print">
+                            <button class="btn btn-sm btn-dark rounded-pill px-4" onclick="guardarRegistro('${prompt.substring(0,25) || 'Consulta IA'}')">
+                                <i class="ri-save-line me-1"></i> Guardar en Historial
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-4" onclick="window.print()">
+                                <i class="ri-printer-line me-1"></i> Imprimir
+                            </button>
+                        </div>
+                    </div>`;
+            } else {
+                chat.innerHTML += `<div class="alert alert-warning no-print"><strong>Aviso:</strong> ${data.message}</div>`;
+            }
+        } catch (e) {
+            chat.innerHTML += `<div class="alert alert-danger no-print"><strong>Error:</strong> No se pudo conectar con el servidor.</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ri-sparkling-fill me-2"></i> Procesar`;
+            promptInput.value = "";
+            promptInput.style.height = "auto";
+            cancelarArchivo();
+            chat.scrollTop = chat.scrollHeight;
+        }
+    }
+
+    async function guardarRegistro(titulo) {
+        let formData = new FormData();
+        formData.append('titulo', titulo + "...");
+        formData.append('contenido', ultimaRespuestaAI);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        try {
+            const resp = await fetch("{% url 'asistente_ia:guardar_en_notebook' %}", { method: 'POST', body: formData });
+            if(resp.ok) {
+                alert("Guardado correctamente");
+                location.reload();
+            }
+        } catch (error) {
+            alert("Error al guardar");
+        }
+    }
+
+    async function eliminarRegistro(id) {
+        if(confirm("¿Eliminar este expediente definitivamente?")) {
+            let formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            await fetch(`/asistente-ia/eliminar-escrito/${id}/`, { method: 'POST', body: formData });
+            location.reload();
+        }
+    }
+</script>
+{% endblock %}

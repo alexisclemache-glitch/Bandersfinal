@@ -1,0 +1,186 @@
+{% extends "vertical.html" %}
+
+{% block page_content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 30px; background: #ffffff;">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm rounded-circle me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
+                                <i class="ri-scales-3-line fs-4 text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-dark mb-0">Gestión de Obligación Económica</h4>
+                                <p class="text-muted small mb-0">Consorio Jurídico Contable Banders • Control de Deuda</p>
+                            </div>
+                        </div>
+                        <div class="d-none d-md-flex gap-3">
+                            <div class="text-end px-3 border-end">
+                                <small class="text-muted fw-bold d-block" style="font-size: 10px; text-transform: uppercase;">Monto Total</small>
+                                <span class="fw-bold text-dark fs-5" id="preview_total">$0</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted fw-bold d-block" style="font-size: 10px; text-transform: uppercase;">Saldo Pendiente</small>
+                                <span class="fw-bold text-primary fs-5" id="preview_saldo">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="p-3 rounded-4 d-flex justify-content-around align-items-center" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                                <div class="text-center">
+                                    <i class="ri-money-dollar-circle-line text-muted mb-1 d-block fs-4"></i>
+                                    <small class="fw-bold text-muted d-block" style="font-size: 11px;">MONTO CONTRATADO</small>
+                                    <span class="fw-extrabold text-dark h5 mb-0" id="card_total">$ 0</span>
+                                </div>
+                                <div style="width: 1px; height: 40px; background-color: #e2e8f0;"></div>
+                                <div class="text-center">
+                                    <i class="ri- wallet-3-line text-primary mb-1 d-block fs-4"></i>
+                                    <small class="fw-bold text-muted d-block" style="font-size: 11px;">SALDO ACTUAL</small>
+                                    <span class="fw-extrabold text-primary h5 mb-0" id="card_saldo">$ 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" id="formDeuda">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small ms-2">ID TRANSACCIÓN / CÉDULA</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0 rounded-start-pill ps-3"><i class="ri-fingerprint-line text-primary"></i></span>
+                                    <input type="text" name="transaccion_id" class="form-control bg-light border-0 rounded-end-pill py-2"
+                                           value="{{ form.transaccion_id.value|default:'' }}"
+                                           placeholder="Ej: TXN-0001" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small ms-2">EXPEDIENTE JURÍDICO ASOCIADO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0 rounded-start-pill ps-3"><i class="ri-folder-open-line text-primary"></i></span>
+                                    <select name="expediente" class="form-select bg-light border-0 rounded-end-pill py-2" required>
+                                        <option value="" disabled selected>Seleccione un expediente...</option>
+                                        {% for choice in form.fields.expediente.queryset %}
+                                            <option value="{{ choice.pk }}" {% if choice.pk|stringformat:"s" == form.expediente.value|stringformat:"s" %}selected{% endif %}>
+                                                {{ choice }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small ms-2">ESTABLECER DEUDA TOTAL ($)</label>
+                                <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                                    <span class="input-group-text bg-primary border-0 text-white ps-3 fw-bold">$</span>
+                                    <input type="number" name="total_deuda" step="1" id="id_total_deuda" min="0"
+                                           class="form-control border-0 py-3 fw-bold text-dark fs-5"
+                                           value="{{ form.total_deuda.value|default:0|floatformat:0 }}"
+                                           placeholder="Ingrese el valor total" required
+                                           style="background-color: #fff;">
+                                </div>
+                                <div id="error_monto" class="text-danger extra-small mt-2 ms-3" style="display: none;">
+                                    <i class="ri-error-warning-line"></i> El monto no puede ser negativo.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small ms-2">ESTADO DE OBLIGACIÓN</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0 rounded-start-pill ps-3"><i class="ri-flag-line text-primary"></i></span>
+                                    <select name="estado" class="form-select bg-light border-0 rounded-end-pill py-2">
+                                        {% for val, label in form.fields.estado.choices %}
+                                            <option value="{{ val }}" {% if val == form.estado.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3 mt-5 border-top pt-4">
+                            <a href="{% url 'pagos:lista_pagos' %}" class="btn btn-light rounded-pill px-4 fw-bold text-muted">
+                                <i class="ri-close-line me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" id="btnGuardar" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border: none;">
+                                <i class="ri-save-3-line me-1"></i> Guardar y Finalizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .form-control:focus, .form-select:focus {
+        background-color: #fff !important;
+        border: 1px solid #6366f1 !important;
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.1) !important;
+    }
+    .fw-extrabold { font-weight: 800; }
+    .extra-small { font-size: 0.8rem; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block extra_javascript %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputMonto = document.getElementById('id_total_deuda');
+        const previewTotal = document.getElementById('preview_total');
+        const previewSaldo = document.getElementById('preview_saldo');
+        const cardTotal = document.getElementById('card_total');
+        const cardSaldo = document.getElementById('card_saldo');
+
+        function updatePreviews() {
+            const valor = parseFloat(inputMonto.value) || 0;
+            const formateado = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(valor);
+
+            // Como es un registro nuevo, Monto y Saldo suelen ser iguales inicialmente
+            previewTotal.innerText = formateado;
+            previewSaldo.innerText = formateado;
+            cardTotal.innerText = formateado;
+            cardSaldo.innerText = formateado;
+
+            // Alerta visual de error
+            if (valor < 0) {
+                document.getElementById('error_monto').style.display = 'block';
+                inputMonto.classList.add('text-danger');
+            } else {
+                document.getElementById('error_monto').style.display = 'none';
+                inputMonto.classList.remove('text-danger');
+            }
+        }
+
+        inputMonto.addEventListener('input', updatePreviews);
+        updatePreviews(); // Inicializar al cargar
+    });
+</script>
+{% endblock extra_javascript %}
+{% endblock page_content %}
