@@ -11,7 +11,11 @@
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6 col-xl-5">
                 <div class="text-center mb-4">
-                    <img src="{% static 'images/logo-light.png' %}" alt="Logo" height="90" class="drop-shadow">
+                    {% if static_logo_url %}
+                        <img src="{{ static_logo_url }}" alt="Logo" height="90" class="drop-shadow">
+                    {% else %}
+                        <img src="{% static 'images/logo-light.png' %}" alt="Logo" height="90" class="drop-shadow">
+                    {% endif %}
                 </div>
 
                 <div class="card mt-2 shadow-lg border-0 auth-card">
@@ -19,29 +23,39 @@
                     <div class="card-body p-5 text-center">
                         <div class="avatar-lg mx-auto mb-4">
                             <div class="avatar-title bg-soft-primary text-primary display-4 rounded-circle">
-                                <i class="ri-mail-check-line"></i>
+                                <iconify-icon icon="solar:letter-opened-bold-duotone" class="display-4"></iconify-icon>
                             </div>
                         </div>
 
-                        <h4 class="fw-bold text-uppercase">Confirmar Correo</h4>
-                        
+                        <h4 class="fw-bold text-uppercase text-primary">Verificación de Cuenta</h4>
+
                         {% if confirmation %}
-                            <p class="text-muted">Estás a un paso de activar tu cuenta en el <b>Consorcio Jurídico Banders</b>.</p>
+                            <p class="text-muted">Hola, <b>{{ confirmation.email_address.user.username }}</b>. Estás a un paso de activar tu acceso en el <b>Consorcio Jurídico Banders</b>.</p>
+
                             <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
                                 {% csrf_token %}
                                 <div class="d-grid mt-4">
-                                    <button class="btn btn-primary btn-lg fw-bold shadow" type="submit">
-                                        ACTIVAR MI ACCESO
+                                    <button class="btn btn-primary btn-lg fw-bold shadow-sm rounded-pill py-3" type="submit">
+                                        CONFIRMAR Y ACTIVAR ACCESO
                                     </button>
                                 </div>
                             </form>
                         {% else %}
-                            <div class="alert alert-danger border-0 shadow-sm">
-                                <strong>Error:</strong> El enlace ha caducado o no es válido.
+                            <div class="alert alert-danger border-0 shadow-sm rounded-3">
+                                <iconify-icon icon="solar:danger-triangle-bold" class="me-2 align-middle"></iconify-icon>
+                                <strong>Enlace no válido:</strong> El token ha caducado o la URL está mal escrita.
                             </div>
-                            <a href="{% url 'account_login' %}" class="btn btn-soft-danger w-100">Solicitar nuevo enlace</a>
+                            <div class="mt-4">
+                                <a href="{% url 'account_email' %}" class="btn btn-outline-primary w-100 rounded-pill">
+                                    Solicitar nuevo enlace de activación
+                                </a>
+                            </div>
                         {% endif %}
                     </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0 text-white-50">© {% now "Y" %} Proyecto Banders. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
@@ -49,9 +63,30 @@
 </div>
 
 <style>
-    .auth-bg-custom { background: linear-gradient(135deg, #1a1c2d 0%, #405189 100%); position: relative; }
-    .bg-overlay { position: absolute; height: 100%; width: 100%; background: url("https://www.transparenttextures.com/patterns/cubes.png"); opacity: 0.1; top: 0; left: 0; }
-    .auth-card { border-radius: 1.25rem; background: rgba(255, 255, 255, 0.98); }
-    .bg-soft-primary { background-color: rgba(64, 81, 137, 0.1); }
+    .auth-bg-custom {
+        background: linear-gradient(135deg, #1a1c2d 0%, #405189 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .bg-overlay {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background: url("https://www.transparenttextures.com/patterns/cubes.png");
+        opacity: 0.1;
+        top: 0;
+        left: 0;
+    }
+    .auth-card {
+        border-radius: 1.5rem;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+    }
+    .bg-soft-primary {
+        background-color: rgba(64, 81, 137, 0.1);
+    }
+    .drop-shadow {
+        filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+    }
 </style>
 {% endblock %}

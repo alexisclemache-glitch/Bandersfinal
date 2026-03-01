@@ -1,9 +1,9 @@
-venv/
-.venv/
 .env
 db.sqlite3
-staticfiles/
-media/
-node_modules/
+staticfiles_production/
 __pycache__/
 *.pyc
+venv/
+.venv/
+.vscode/
+media/

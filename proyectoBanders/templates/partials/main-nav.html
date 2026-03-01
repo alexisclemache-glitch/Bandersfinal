@@ -1,15 +1,14 @@
 {% load static i18n %}
 
 <div class="main-nav">
-    <div class="logo-box text-center py-3" style="background: rgba(0,0,0,0.1);">
+    <div class="logo-box">
         <a href="{% url 'dashboard:dashboard' %}" class="logo-dark">
-            <img src="{% static 'images/logo-sm.png' %}" style="height: 30px; width: auto;" alt="logo sm">
-            <img src="{% static 'images/logo-dark.png' %}" style="height: 40px; width: auto;" class="ms-1" alt="logo dark">
+            <img src="{% static 'images/logo-sm.png' %}" class="logo-sm" alt="logo sm">
+            <img src="{% static 'images/logo-dark.png' %}" class="logo-lg" alt="logo dark">
         </a>
-        <a href="{% url 'dashboard:dashboard' %}" class="logo-light d-flex justify-content-center align-items-center w-100">
-            <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" 
-                 style="height: 42px !important; width: auto !important; max-width: 160px;" 
-                 class="auth-logo-img">
+        <a href="{% url 'dashboard:dashboard' %}" class="logo-light d-flex justify-content-center align-items-center w-100 py-2">
+            <img src="{% static 'images/logo-sm.png' %}" class="logo-sm d-none" alt="logo sm">
+            <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" height="50" class="auth-logo-img">
         </a>
     </div>
 
@@ -21,21 +20,22 @@
         <div class="nav-item mb-4 mt-2 text-center" style="list-style: none;">
             <div class="d-block">
                 <div class="position-relative d-inline-block">
+                    {# La foto ahora es un enlace a tu propio perfil #}
                     <a href="{% url 'abogados:perfil_detail' user.perfil.pk %}">
                         {% if user.perfil.foto %}
                             <img src="{{ user.perfil.foto.url }}"
-                                 class="rounded-circle border border-2 border-primary shadow-sm"
-                                 style="object-fit: cover; width: 75px; height: 75px;">
+                                 class="rounded-circle avatar-lg border border-2 border-primary shadow-sm"
+                                 style="object-fit: cover; width: 80px; height: 80px;">
                         {% else %}
                             <img src="{% static 'images/users/user-dummy.jpg' %}"
-                                 class="rounded-circle border shadow-sm"
-                                 style="object-fit: cover; width: 75px; height: 75px;">
+                                 class="rounded-circle avatar-lg border shadow-sm"
+                                 style="object-fit: cover; width: 80px; height: 80px;">
                         {% endif %}
                     </a>
                     <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-2 border-white rounded-circle"></span>
                 </div>
 
-                <h5 class="mt-2 mb-0 fw-bold text-white" style="font-size: 15px;">{{ user.get_full_name|default:user.username }}</h5>
+                <h5 class="mt-2 mb-0 fw-bold text-white">{{ user.get_full_name|default:user.username }}</h5>
                 <p class="fs-12 mb-0" style="color: rgba(255,255,255,0.7) !important;">
                     {{ user.perfil.especialidad|default:"Abogado Jurídico" }}
                 </p>
@@ -43,7 +43,7 @@
         </div>
 
         <ul class="navbar-nav" id="navbar-nav">
-            <li class="menu-title"><span style="color: rgba(255,255,255,0.5); font-size: 11px; text-transform: uppercase;">Gestión Jurídica</span></li>
+            <li class="menu-title">Gestión Jurídica</li>
 
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'dashboard:dashboard' %}">
@@ -60,9 +60,11 @@
                 <div class="collapse" id="sidebarAbogados">
                     <ul class="nav sub-navbar-nav">
                         <li class="sub-nav-item">
+                            {# Enlace a TU perfil personal #}
                             <a class="sub-nav-link text-primary fw-bold" href="{% url 'abogados:perfil_detail' user.perfil.pk %}">Mi Perfil</a>
                         </li>
                         <li class="sub-nav-item">
+                            {# Enlace al directorio de otros abogados #}
                             <a class="sub-nav-link" href="{% url 'abogados:colaboradores_list' %}">Ver Directorio</a>
                         </li>
                     </ul>
@@ -76,8 +78,12 @@
                 </a>
                 <div class="collapse" id="sidebarCustomers">
                     <ul class="nav sub-navbar-nav">
-                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'clientes:list' %}">Lista de Clientes</a></li>
-                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'clientes:create' %}">Añadir Cliente</a></li>
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link" href="{% url 'clientes:list' %}">Lista de Clientes</a>
+                        </li>
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link" href="{% url 'clientes:create' %}">Añadir Cliente</a>
+                        </li>
                     </ul>
                 </div>
             </li>
@@ -89,7 +95,9 @@
                 </a>
                 <div class="collapse" id="sidebarCasos">
                     <ul class="nav sub-navbar-nav">
-                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'expedientes:lista_expedientes' %}">Ver Expedientes</a></li>
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link" href="{% url 'expedientes:lista_expedientes' %}">Ver Expedientes</a>
+                        </li>
                     </ul>
                 </div>
             </li>
@@ -118,7 +126,7 @@
                 </div>
             </li>
 
-            <li class="menu-title mt-2"><span style="color: #007bff; font-size: 11px; text-transform: uppercase;">Inteligencia Artificial</span></li>
+            <li class="menu-title mt-2 text-primary">Inteligencia Artificial</li>
 
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'asistente_ia:inbox_ia' %}">
@@ -137,7 +145,9 @@
                 </a>
                 <div class="collapse" id="sidebarNotebooks">
                     <ul class="nav sub-navbar-nav">
-                        <li class="sub-nav-item"><a class="sub-nav-link" href="{% url 'asistente_ia:inbox_ia' %}">Ver Mis Escritos</a></li>
+                        <li class="sub-nav-item">
+                            <a class="sub-nav-link" href="{% url 'asistente_ia:inbox_ia' %}">Ver Mis Escritos</a>
+                        </li>
                     </ul>
                 </div>
             </li>

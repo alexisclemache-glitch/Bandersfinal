@@ -1,93 +1,99 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "Iniciar Sesión | Banders" %}{% endblock title %}
+{% block title %}{% trans "Acceso Premium | Banders Law Firm" %}{% endblock title %}
 
 {% block content %}
-<div class="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
-    <div class="bg-overlay" style="background-color: #405189; opacity: 0.8; position: absolute; height: 100%; width: 100%; top:0; left:0; z-index: -1;"></div>
+<div class="auth-page-wrapper d-flex justify-content-center align-items-center min-vh-100" style="background: radial-gradient(circle at top right, #020617, #0f172a); position: relative; overflow: hidden;">
+
+    <div style="position: absolute; width: 400px; height: 400px; background: rgba(0, 97, 255, 0.05); filter: blur(100px); top: -100px; right: -100px; border-radius: 50%;"></div>
+    <div style="position: absolute; width: 300px; height: 300px; background: rgba(0, 97, 255, 0.03); filter: blur(80px); bottom: -50px; left: -50px; border-radius: 50%;"></div>
 
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6 col-xl-5">
 
-                <div class="text-center mb-4">
-                    <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" height="80" class="auth-logo-img">
+                <div class="text-center mb-5">
+                    <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" height="70" style="filter: drop-shadow(0 0 10px rgba(255,255,255,0.1));">
                 </div>
 
-                <div class="card mt-2 shadow-lg border-0">
-                    <div class="card-body p-4">
+                <div class="card border-0 shadow-lg" style="border-radius: 24px; background: rgba(255, 255, 255, 1); backdrop-filter: blur(10px);">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h4 class="fw-800" style="color: #020617; letter-spacing: -0.02em;">Bienvenido de nuevo</h4>
+                            <p class="text-muted small">Accede a tu panel de control jurídico</p>
+                        </div>
 
-                        {# MANEJO DE MENSAJES Y ERRORES - Optimizado para Allauth v6 #}
-                        {% if messages or form.errors %}
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="ri-error-warning-line me-2"></i>
-                                {% if form.non_field_errors %}
-                                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-                                {% elif form.errors %}
-                                    {% trans "Revisa tus credenciales e intenta de nuevo." %}
-                                {% elif messages %}
-                                    {% for message in messages %}{{ message }}{% endfor %}
-                                {% endif %}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        {% if form.errors %}
+                            <div class="alert alert-danger border-0 rounded-4 mb-4 small" role="alert">
+                                <i class="ri-error-warning-line me-2"></i> Credenciales incorrectas. Intente de nuevo.
                             </div>
                         {% endif %}
 
-                        <div class="text-center mt-2">
-                            <h5 class="text-danger fw-bold text-uppercase">Consorcio Jurídico Banders</h5>
-                            <p class="text-muted">Inicia sesión para continuar.</p>
-                        </div>
+                        <form method="POST" action="{% url 'account_login' %}" class="needs-validation">
+                            {# TOKEN CRÍTICO PARA DJANGO #}
+                            {% csrf_token %}
 
-                        <div class="p-2 mt-4">
-                            {# IMPORTANTE: En v6.0 es mejor omitir el 'action' o asegurar que apunte a account_login #}
-                            <form method="POST" action="{% url 'account_login' %}">
-                                {% csrf_token %}
-
-                                {# PERSISTENCIA: Activa SESSION_COOKIE_AGE de 30 días configurada en settings #}
-                                <input type="hidden" name="remember" value="true">
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="id_login">Correo electrónico</label>
-                                    <input type="email" name="login" id="id_login"
-                                           class="form-control {% if form.login.errors %}is-invalid{% endif %}"
-                                           placeholder="nombre@ejemplo.com" required
-                                           value="{{ form.login.value|default:'' }}" autofocus>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="float-end">
-                                        <a href="{% url 'account_reset_password' %}" class="text-muted small text-decoration-underline">¿Olvidaste tu contraseña?</a>
-                                    </div>
-                                    <label class="form-label" for="id_password">Contraseña</label>
-                                    <input type="password" name="password" id="id_password"
-                                           class="form-control {% if form.password.errors %}is-invalid{% endif %}"
-                                           placeholder="Tu contraseña" required>
-                                </div>
-
-                                {# INDICADOR MFA BANDERS #}
-                                <div class="text-center mb-4">
-                                    <span class="badge rounded-pill bg-soft-primary text-primary border shadow-sm px-3 py-2">
-                                        <i class="ri-shield-check-fill me-1"></i> Verificación en dos pasos activa
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-muted">CORREO ELECTRÓNICO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;">
+                                        <i class="ri-mail-line text-primary"></i>
                                     </span>
+                                    {# NAME="LOGIN" ES OBLIGATORIO #}
+                                    <input type="email" name="login" class="form-control bg-light border-0 py-2 px-3"
+                                           style="border-radius: 0 12px 12px 0;" placeholder="ejemplo@banders.com" required>
                                 </div>
+                            </div>
 
-                                <div class="mt-4">
-                                    <button class="btn btn-danger btn-lg w-100 fw-bold py-2 shadow-sm" type="submit">
-                                        ENTRAR <i class="ri-login-box-line ms-1"></i>
-                                    </button>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between">
+                                    <label class="form-label fw-bold small text-muted">CONTRASEÑA</label>
+                                    <a href="{% url 'account_reset_password' %}" class="small text-primary fw-bold text-decoration-none">¿La olvidaste?</a>
                                 </div>
-                            </form>
-                        </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0" style="border-radius: 12px 0 0 12px;">
+                                        <i class="ri-lock-2-line text-primary"></i>
+                                    </span>
+                                    {# NAME="PASSWORD" ES OBLIGATORIO #}
+                                    <input type="password" name="password" class="form-control bg-light border-0 py-2 px-3"
+                                           style="border-radius: 0 12px 12px 0;" placeholder="••••••••" required>
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+                                <label class="form-check-label small text-muted" for="rememberMe">Mantener sesión iniciada</label>
+                            </div>
+
+                            <button class="btn btn-dark w-100 py-3 shadow-sm fw-bold mb-4"
+                                    style="border-radius: 16px; background: #020617; border: none;" type="submit">
+                                INICIAR SESIÓN <i class="ri-arrow-right-line ms-2"></i>
+                            </button>
+
+                            <div class="text-center">
+                                <span class="badge rounded-pill bg-soft-primary text-primary border shadow-sm px-3 py-2" style="font-size: 0.65rem;">
+                                    <i class="ri-shield-check-fill me-1"></i> VERIFICACIÓN SSL ACTIVA
+                                </span>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
                 <div class="mt-4 text-center">
-                    <p class="mb-0 text-white">¿No tienes cuenta?
-                        <a href="{% url 'account_signup' %}" class="fw-bold text-white text-decoration-underline">Regístrate</a>
+                    <p class="mb-0 text-white-50 small">¿Nuevo en Banders?
+                        <a href="{% url 'account_signup' %}" class="fw-bold text-white text-decoration-none ms-1">Solicitar acceso</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .fw-800 { font-weight: 800; }
+    .bg-soft-primary { background-color: rgba(0, 97, 255, 0.1); }
+    .input-group:focus-within .input-group-text { background-color: #e2e8f0 !important; }
+    .form-control:focus { box-shadow: none; background-color: #f1f5f9 !important; }
+</style>
 {% endblock content %}

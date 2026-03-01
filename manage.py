@@ -6,8 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # MODIFICACIÓN: Se añade 'proyectoBanders' adicional para encontrar los settings
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proyectoBanders.proyectoBanders.settings')
+    # MODIFICACIÓN: Se añade 'config' adicional para encontrar los settings
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proyectoBanders.config.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

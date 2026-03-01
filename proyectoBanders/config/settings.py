@@ -17,8 +17,9 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
-# 4. APLICACIONES
+# 4. APLICACIONES (Orden corregido para Allauth v6 y Estáticos)
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',  # Maneja estáticos en desarrollo eficientemente
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -28,16 +29,17 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django.contrib.sites',
 
-    # Aplicaciones de Terceros
+    # Allauth v6 + MFA (Configuración que no rompe F2A)
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.mfa',
+
+    # UI y Utilidades
     'widget_tweaks',
     'crispy_forms',
     'crispy_bootstrap5',
     'simple_history',
-    'whitenoise.runserver_nostatic',
 
     # Aplicaciones Locales
     'proyectoBanders.usuarios',
@@ -54,7 +56,7 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
-# 5. MIDDLEWARE
+# 5. MIDDLEWARE (WhiteNoise debe ir justo debajo de SecurityMiddleware)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -66,19 +68,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'proyectoBanders.abogados.middleware.ProtegerMFAMiddleware',
+    'proyectoBanders.abogados.middleware.ProtegerMFAMiddleware',  # Tu protección 2FA
 ]
 
-ROOT_URLCONF = 'proyectoBanders.proyectoBanders.urls'
+ROOT_URLCONF = 'proyectoBanders.config.urls'
+WSGI_APPLICATION = 'proyectoBanders.config.wsgi.application'
 
 # 6. TEMPLATES
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),
-            os.path.join(BASE_DIR, 'proyectoBanders', 'templates'),
-        ],
+        'DIRS': [os.path.join(BASE_DIR, 'proyectoBanders', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -92,17 +92,11 @@ TEMPLATES = [
     },
 ]
 
-# 7. INTERNACIONALIZACIÓN
-LANGUAGE_CODE = 'es-ec'
-TIME_ZONE = 'America/Guayaquil'
-USE_I18N = True
-USE_TZ = True
-
 # 8. BASE DE DATOS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'proyectoBanders',
+        'NAME': 'config',
         'USER': 'postgres',
         'PASSWORD': '1910',
         'HOST': 'localhost',
@@ -110,33 +104,28 @@ DATABASES = {
     }
 }
 
-# 9. MODELO DE USUARIO PERSONALIZADO
+# 9. MODELO DE USUARIO
 AUTH_USER_MODEL = 'usuarios.UsuarioCustom'
-
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# 10. CONFIGURACIÓN ALLAUTH v6.0+ (ESTILO MODERNO - SIN WARNINGS)
+# 10. CONFIGURACIÓN ALLAUTH v6.0+ (Sintaxis moderna sin Warnings)
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = "mandatory" # "none" si no tienes SMTP
-
-# Allauth v6 ahora pide definir los campos así para evitar Warnings:
-# El '*' significa que son obligatorios.
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# Esto reemplaza ACCOUNT_EMAIL_REQUIRED y ACCOUNT_USERNAME_REQUIRED
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*', 'first_name', 'last_name']
-
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
 
-# Tus formularios personalizados
 ACCOUNT_FORMS = {
     'login': 'proyectoBanders.usuarios.forms.UsuarioLoginForm',
     'signup': 'proyectoBanders.usuarios.forms.UsuarioRegistroForm',
 }
 
-# 11. CONFIGURACIÓN MFA / TOTP (QR)
+# 11. CONFIGURACIÓN MFA / TOTP (Indispensable para F2A)
 MFA_SUPPORTED_TYPES = ['totp']
 MFA_TOTP_ISSUER = 'Consorcio Banders'
 MFA_REQUIRED_FOR_LOGIN = False
@@ -145,11 +134,18 @@ MFA_REQUIRED_FOR_LOGIN = False
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# 13. ARCHIVOS ESTÁTICOS
-STATIC_URL = 'static/'
+# 13. ARCHIVOS ESTÁTICOS (CORRECCIÓN CRÍTICA DE DISEÑO)
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_production')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'proyectoBanders', 'static')]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'proyectoBanders', 'static'),
+]
+
+# Esta lógica evita que el menú se encime por falta de CSS en desarrollo
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -158,18 +154,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'Consorcio Jurídico Banders <consorciojuridicobanders@gmail.com>'
 
-# 15. SESIÓN
-SESSION_COOKIE_AGE = 2592000 # 30 días
+# 15. SESIÓN Y MENSAJES
+SESSION_COOKIE_AGE = 2592000
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False # Cambiar a True en producción (HTTPS)
+SESSION_COOKIE_SECURE = False
 MESSAGE_TAGS = {messages.ERROR: 'danger'}
+
 
 class LazyEncoder(DjangoJSONEncoder):
     def default(self, obj):
         if isinstance(obj, Promise):
             return str(obj)
         return super().default(obj)
+
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 

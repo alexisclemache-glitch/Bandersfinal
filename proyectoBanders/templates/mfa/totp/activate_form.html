@@ -1,45 +1,29 @@
 {% extends "base.html" %}
-{% load i18n crispy_forms_tags %}
-
-{% block title %}Configurar Seguridad QR{% endblock title %}
+{% load i18n %}
 
 {% block content %}
-<div class="auth-page-wrapper pt-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6">
-                <div class="card mt-4 shadow-lg border-0">
-                    <div class="card-body p-4 text-center">
-                        <div class="avatar-lg mx-auto mb-3">
-                            <div class="avatar-title bg-soft-primary text-primary display-5 rounded-circle">
-                                <i class="ri-qr-code-line"></i>
-                            </div>
-                        </div>
-                        <h4 class="text-primary">Activar Doble Factor</h4>
-                        <p class="text-muted">Escanea este código con **Google Authenticator** o tu app favorita para proteger tu cuenta de Banders.</p>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h2 class="fw-bold text-primary">Configurar QR</h2>
+            <p class="text-muted">Escanea este código con Google Authenticator o Authy.</p>
 
-                        <div class="bg-light p-3 d-inline-block rounded mb-4 shadow-sm">
-                            <img src="{{ totp_svg_data_uri }}" alt="Código QR de Seguridad" class="img-fluid" style="max-width: 200px;">
-                        </div>
-
-                        <div class="text-start">
-                            <form method="POST">
-                                {% csrf_token %}
-                                {{ form|crispy }}
-                                <div class="mt-4">
-                                    <button class="btn btn-primary w-100 py-2 fw-bold" type="submit">
-                                        Confirmar y Activar Seguridad
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4 text-center">
-                    <p class="mb-0 text-muted">¿No puedes escanear el código? Prueba el método de ingreso manual.</p>
-                </div>
+            <div class="bg-white p-4 shadow-sm d-inline-block rounded-4 mb-4">
+                {{ totp_svg | safe }}
             </div>
+
+            <form method="post" class="text-start">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Introduce el código de 6 dígitos:</label>
+                    <input type="text" name="code" class="form-control form-control-lg text-center"
+                           placeholder="000000" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 btn-lg rounded-pill">
+                    ACTIVAR AHORA
+                </button>
+            </form>
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

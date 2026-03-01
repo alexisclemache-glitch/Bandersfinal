@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="auth-page-wrapper py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4 text-center">
+                        <div class="avatar-md mx-auto mb-3">
+                            <div class="avatar-title bg-soft-danger text-danger display-6 rounded-circle">
+                                <iconify-icon icon="solar:shield-cross-bold-duotone"></iconify-icon>
+                            </div>
+                        </div>
+                        <h4 class="text-danger fw-bold">Desactivar MFA</h4>
+                        <p class="text-muted">¿Estás seguro de que deseas eliminar la protección de doble factor? Tu cuenta será menos segura.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg fw-bold rounded-pill shadow">
+                                    SÍ, DESACTIVAR PROTECCIÓN
+                                </button>
+                                <a href="{% url 'mfa_index' %}" class="btn btn-light btn-lg fw-bold rounded-pill">
+                                    CANCELAR
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

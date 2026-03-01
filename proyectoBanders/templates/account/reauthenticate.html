@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account %}
+
+{% block content %}
+<div class="auth-page-wrapper py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-4">
+                            <div class="avatar-md mx-auto mb-3">
+                                <div class="avatar-title bg-soft-warning text-warning display-6 rounded-circle">
+                                    <iconify-icon icon="solar:shield-keyhole-bold-duotone"></iconify-icon>
+                                </div>
+                            </div>
+                            <h4 class="text-primary fw-bold">Confirmación de Seguridad</h4>
+                            <p class="text-muted">Por favor, confirma tu contraseña para acceder a la configuración de Doble Factor.</p>
+                        </div>
+
+                        <form method="POST" action="{% url 'account_reauthenticate' %}">
+                            {% csrf_token %}
+
+                            {% if redirect_field_value %}
+                                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                            {% else %}
+                                <input type="hidden" name="next" value="{{ request.GET.next }}">
+                            {% endif %}
+
+                            <div class="mb-4 text-start">
+                                <label for="id_password" class="form-label fw-700 text-uppercase x-small text-muted">Tu Contraseña</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><iconify-icon icon="solar:lock-password-bold"></iconify-icon></span>
+                                    <input type="password" name="password" id="id_password"
+                                           class="form-control form-control-lg bg-light border-0"
+                                           placeholder="Introduce tu contraseña actual" required autofocus>
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="text-danger mt-2 small">
+                                        {{ form.password.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-pill shadow-sm">
+                                    CONFIRMAR IDENTIDAD
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0 text-muted">¿No eres tú? <a href="{% url 'account_logout' %}" class="fw-bold text-primary text-decoration-none">Cerrar sesión</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
