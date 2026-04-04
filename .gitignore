@@ -1,9 +1,28 @@
+# Seguridad y Configuración
 .env
 db.sqlite3
-staticfiles_production/
-__pycache__/
-*.pyc
+SECRET_KEY
+local_settings.py
+
+# Archivos de Medios y Privacidad (Fotos de personas)
+media/
+perfiles/
+clientes/
+
+# Entornos Virtuales
 venv/
 .venv/
+env/
+
+# Archivos de Sistema y Caché
+__pycache__/
+*.py[cod]
+*$py.class
+staticfiles_production/
+
+# Editores de Código
 .vscode/
-media/
+.idea/
+
+# Logs
+*.log
