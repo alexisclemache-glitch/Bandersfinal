@@ -1,187 +1,223 @@
 {% extends "vertical.html" %}
 {% load static %}
 
-{% block title %}Dashboard Premium | Banders Law Firm{% endblock %}
-
 {% block extra_css %}
-{# Tipografía Premium nítida #}
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
     :root {
-        --lh-primary: #0061ff; /* Azul Premium */
-        --lh-dark: #020617; /* Negro profundo */
-        --lh-text-main: #1e293b;
-        --lh-text-muted: #475569;
-        --lh-border: #e2e8f0;
-        --lh-bg-page: #fbfcfe;
+        --b-dark: #0f172a;
+        --b-accent: #0ab39c;
+        --b-gold: linear-gradient(135deg, #c5a059 0%, #f1d39b 50%, #b38d46 100%);
+        --b-glass: rgba(255, 255, 255, 0.9);
+        --b-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
     }
 
     body {
-        background-color: var(--lh-bg-page);
+        background-color: #f8fafc;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        color: var(--lh-text-main);
-        -webkit-font-smoothing: antialiased;
+        color: #1e293b;
     }
 
-    .lh-title {
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: var(--lh-dark);
+    .dashboard-wrapper {
+        padding: 40px;
+        margin-top: 65px;
     }
 
-    /* Bento Grid: Tarjetas Luxury con bordes suaves */
+    /* BENTO CARDS MODERNAS */
     .bento-card {
-        background: #ffffff;
-        border: 1px solid var(--lh-border);
-        border-radius: 24px;
-        padding: 25px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        background: white;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 28px;
+        padding: 30px;
+        height: 100%;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--b-shadow);
     }
 
     .bento-card:hover {
-        border-color: var(--lh-primary);
-        transform: translateY(-3px);
-        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.04);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+        border-color: var(--b-accent);
     }
 
-    .lh-stat-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: var(--lh-text-muted);
-    }
-
-    /* Estilo Premium para la foto del perfil en el Welcome */
-    .avatar-welcome {
-        object-fit: cover;
-        width: 60px;
-        height: 60px;
-        border: 2px solid #fff;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    /* Badges Luxury */
-    .badge-luxury {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 5px 12px;
-        border-radius: 8px;
-        background-color: var(--lh-dark);
-        color: #fff;
-    }
-
-    /* Tabla Premium */
-    .table-premium tbody tr {
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    .table-premium tbody tr:hover {
-        background-color: rgba(0, 97, 255, 0.02);
-    }
-
-    /* VISA CARD INFINITE (Respetamos tu diseño previo que ya es premium) */
-    .visa-card-wrap { perspective: 1000px; }
-    .visa-card {
-        background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
-        border-radius: 20px;
+    /* TARJETA DE CRÉDITO "INFINITE" */
+    .infinite-card {
+        background: radial-gradient(circle at top right, #1e293b, #020617);
+        border-radius: 24px;
+        padding: 30px;
         color: white;
-        transition: transform 0.6s ease;
-        transform-style: preserve-3d;
-        height: 200px;
-        border: 1px solid rgba(255,255,255,0.05);
+        position: relative;
+        overflow: hidden;
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
     }
-    .visa-card-wrap:hover .visa-card { transform: rotateY(5deg); }
 
+    .infinite-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .card-chip {
+        width: 50px;
+        height: 38px;
+        background: var(--b-gold);
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .card-number {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-top: 15px;
+    }
+
+    .card-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 2px;
+    }
+
+    /* HEADER STYLE */
+    .welcome-text {
+        font-weight: 800;
+        font-size: 2.6rem;
+        letter-spacing: -2px;
+        color: var(--b-dark);
+    }
+
+    .premium-badge {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 6px 16px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    /* TABLAS LUXURY */
+    .table-luxury thead th {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 11px;
+        text-transform: uppercase;
+        padding-bottom: 20px;
+    }
+
+    .table-luxury tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.2s;
+    }
+
+    .table-luxury tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+    }
 </style>
 {% endblock %}
 
 {% block page_content %}
-<div class="container-fluid py-4 px-md-4">
+<div class="dashboard-wrapper">
 
-    <div class="bento-card mb-4">
-        <div class="row align-items-center">
-            <div class="col-auto">
-                {# Foto de perfil Luxury #}
-                {% if user.perfil.foto %}
-                    <img src="{{ user.perfil.foto.url }}" class="rounded-circle avatar-welcome">
-                {% else %}
-                    <img src="{% static 'images/users/user-dummy.jpg' %}" class="rounded-circle avatar-welcome">
-                {% endif %}
-            </div>
-            <div class="col">
-                <span class="badge-luxury mb-1 d-inline-block">DASHBOARD CORE V2.6</span>
-                <h1 class="lh-title mb-0">Bienvenido, Dr. {{ nombre_abogado }}</h1>
-                <p class="text-muted mb-0">Supervisión en tiempo real de activos y expedientes.</p>
-            </div>
-            <div class="col-auto text-end mt-3 mt-md-0">
-                <button class="btn btn-light rounded-pill px-4 fw-bold shadow-sm me-2" data-bs-toggle="offcanvas" data-bs-target="#agendaCanvas">
-                    <i class="ri-calendar-line me-1"></i>Agenda
-                </button>
-                <a href="{% url 'expedientes:lista_expedientes' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background-color: var(--lh-primary); border: none;">
-                    Nuevo Expediente
-                </a>
-            </div>
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-8">
+            <span class="premium-badge mb-3">Banders Legal Cloud v3.0</span>
+            <h1 class="welcome-text">Buen día, Dr. {{ user.last_name|default:user.username }}</h1>
+            <p class="text-muted fs-5">Gestionando <strong>{{ total_expedientes|default:"0" }}</strong> expedientes activos con éxito.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{% url 'clientes:create' %}" class="btn btn-dark btn-lg rounded-pill px-4 fw-bold shadow-lg">
+                <i class="ri-add-circle-fill me-2"></i> Nuevo Expediente
+            </a>
         </div>
     </div>
 
     <div class="row g-4">
-        <div class="col-xl-8">
+        <div class="col-lg-8">
             <div class="row g-4 mb-4">
                 <div class="col-md-6">
-                    <div class="bento-card h-100">
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="lh-stat-label">Expedientes Totales</span>
-                            <span class="text-success fw-bold" style="font-size: 0.8rem;">+{{ casos_nuevos_mes }}</span>
+                    <div class="bento-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="card-label" style="color:#64748b">Clientes Registrados</p>
+                                <h2 class="fw-800 display-6 m-0">{{ total_clientes|default:"0" }}</h2>
+                                <span class="text-success small fw-bold"><i class="ri-arrow-up-line"></i> +8% este mes</span>
+                            </div>
+                            <div class="p-3 bg-primary-subtle rounded-4 h-100">
+                                <i class="ri-user-heart-fill fs-2 text-primary"></i>
+                            </div>
                         </div>
-                        <h1 class="lh-title mb-0 display-4 fw-800">{{ total_casos }}</h1>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="bento-card h-100">
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="lh-stat-label">Cartera de Clientes</span>
-                            <i class="ri-user-star-line text-muted fs-20"></i>
-                        </div>
-                        <h1 class="lh-title mb-0 display-4 fw-800">{{ total_clientes }}</h1>
+                    <div class="bento-card">
+                        <p class="card-label" style="color:#64748b">Próximo Hito</p>
+                        {% with prox=audiencias_proximas.first %}
+                            <h3 class="fw-800 mt-2">{% if prox %}{{ prox.fecha_inicio|date:"d M, H:i" }}{% else %}Agenda Libre{% endif %}</h3>
+                            <p class="text-muted small text-truncate">{% if prox %}{{ prox.titulo }}{% else %}No hay audiencias cercanas{% endif %}</p>
+                        {% endwith %}
+                        <a href="{% url 'audiencias:calendario' %}" class="text-primary fw-bold small text-decoration-none">Ver calendario completo →</a>
                     </div>
                 </div>
             </div>
 
             <div class="bento-card">
-                <h5 class="lh-title mb-4">Movimientos Recientes</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-800 m-0">Movimientos Críticos</h5>
+                    <a href="{% url 'expedientes:lista_expedientes' %}" class="btn btn-light btn-sm rounded-pill px-3 fw-bold">Ver Historial</a>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-premium align-middle">
+                    <table class="table table-luxury align-middle">
                         <thead>
-                            <tr class="lh-stat-label" style="border-bottom: 2px solid var(--lh-border);">
-                                <th class="ps-0 pb-3">Titular / Fecha</th>
-                                <th class="pb-3">Estado</th>
-                                <th class="text-end pb-3">Acción</th>
+                            <tr>
+                                <th>Titular / Causa</th>
+                                <th>Estado</th>
+                                <th>Última Actualización</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for caso in casos_recientes %}
                             <tr>
-                                <td class="ps-0 py-3">
-                                    <div class="fw-800 text-dark" style="font-size: 0.95rem;">{{ caso.cliente.nombre }} {{ caso.cliente.apellido }}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">Apertura: {{ caso.fecha_inicio|date:"d M, Y" }}</div>
+                                <td class="py-3">
+                                    <div class="fw-bold text-dark">{{ caso.cliente.nombre }}</div>
+                                    <div class="small text-muted">{{ caso.materia|default:"Civil" }}</div>
                                 </td>
                                 <td>
-                                    <span class="badge" style="background-color: rgba(0, 97, 255, 0.08); color: var(--lh-primary); font-weight: 700; font-size: 0.65rem; border-radius: 6px;">
-                                        {{ caso.get_estado_display|upper }}
+                                    <span class="status-pill bg-success-subtle text-success">
+                                        {{ caso.get_estado_display|upper|default:"PROCESO" }}
                                     </span>
                                 </td>
+                                <td class="small text-muted">{{ caso.fecha_inicio|date:"d/m/Y" }}</td>
                                 <td class="text-end">
-                                    <a href="{% url 'clientes:detail' caso.cliente.id %}" class="btn btn-light btn-sm rounded-pill fw-bold px-3">
-                                        Detalles
-                                    </a>
+                                    <a href="{% url 'clientes:detail' caso.cliente.id %}" class="btn btn-sm btn-ghost-dark rounded-pill fw-bold">Ver Ficha</a>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="3" class="text-center py-4 text-muted sharp-text">No hay actividad reciente.</td></tr>
+                            <tr><td colspan="4" class="text-center py-5 text-muted">No hay movimientos registrados hoy.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -189,80 +225,49 @@
             </div>
         </div>
 
-        <div class="col-xl-4">
-            <div class="visa-card-wrap mb-4">
-                <div class="visa-card p-4 d-flex flex-column justify-content-between">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div style="width: 40px; height: 30px; background: linear-gradient(135deg, #d4af37, #f9e29c); border-radius: 5px;"></div>
-                        <div class="fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">BANDERS <span class="fw-300">INFINITE</span></div>
+        <div class="col-lg-4">
+            <div class="infinite-card mb-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="card-chip"></div>
+                    <div class="text-end">
+                        <div class="fw-900 fs-5">BANDERS</div>
+                        <div class="card-label" style="font-size: 8px;">Infinite Business</div>
                     </div>
+                </div>
+
+                <div>
+                    <p class="card-label text-white-50">Honorarios Recaudados</p>
+                    <div class="card-number">${{ total_recaudado|default:"0" }}</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end">
                     <div>
-                        <div class="text-white opacity-60" style="font-size: 0.6rem; text-transform: uppercase;">Total Recaudado</div>
-                        <div class="lh-title text-white mb-0" style="font-size: 2.2rem; letter-spacing: -1px; font-family: 'Courier New', monospace;">
-                            ${{ total_recaudado|floatformat:0 }}
-                        </div>
+                        <p class="card-label mb-0">Titular</p>
+                        <div class="small fw-bold">DR. {{ user.last_name|upper|default:user.username|upper }}</div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-end text-white fs-12">
-                        <span>DR. {{ nombre_abogado|upper }}</span>
-                        <div class="text-end text-danger fw-bold">
-                            <span class="opacity-60 fw-normal fs-10">PENDIENTE:</span> ${{ total_por_cobrar|floatformat:0 }}
-                        </div>
+                    <div class="text-end">
+                        <p class="card-label mb-0">Pendiente</p>
+                        <div class="text-warning fw-bold">${{ total_por_cobrar|default:"0" }}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="bento-card">
-                <h6 class="lh-title mb-4">Agenda Próxima</h6>
-                {% for aud in audiencias_proximas %}
-                <div class="d-flex align-items-center mb-3 p-2 rounded-3" style="background-color: #f8fafc;">
-                    <div class="flex-shrink-0 text-center rounded-3 bg-dark text-white p-2" style="width: 45px;">
-                        <span class="d-block text-uppercase fw-bold" style="font-size: 0.6rem; opacity: 0.7;">{{ aud.fecha_inicio|date:"M" }}</span>
-                        <span class="d-block fw-800" style="font-size: 1.1rem;">{{ aud.fecha_inicio|date:"d" }}</span>
+            <div class="bento-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd;">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="p-3 bg-white rounded-4 shadow-sm me-3">
+                        <i class="ri-magic-fill fs-2 text-info"></i>
                     </div>
-                    <div class="ms-3 overflow-hidden">
-                        <div class="fw-700 text-dark text-truncate small">{{ aud.titulo }}</div>
-                        <div class="text-muted" style="font-size: 0.7rem;">
-                            {{ aud.fecha_inicio|date:"H:i" }} • {{ aud.expediente.cliente.nombre }}
-                        </div>
+                    <div>
+                        <h6 class="fw-800 m-0">Asistente Gemini</h6>
+                        <span class="badge bg-info text-white" style="font-size: 9px;">INTEGRACIÓN PRO</span>
                     </div>
                 </div>
-                {% empty %}
-                <p class="text-center text-muted sharp-text py-3">Sin citas pendientes.</p>
-                {% endfor %}
+                <p class="small text-muted mb-4">¿Necesita redactar un escrito o analizar una sentencia? Mi inteligencia legal está lista.</p>
+                <a href="{% url 'asistente_ia:inbox_ia' %}" class="btn btn-info w-100 text-white rounded-pill fw-bold py-2 shadow-sm">
+                    Iniciar Consulta Inteligente
+                </a>
             </div>
         </div>
     </div>
 </div>
-
-<div class="offcanvas offcanvas-end" tabindex="-1" id="agendaCanvas" style="width: 500px; border-radius: 20px 0 0 20px; border: none;">
-    <div class="offcanvas-header p-4 border-bottom">
-        <h5 class="lh-title mb-0 fs-18">Calendario Judicial</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-        <div id="calendar-main" class="p-2 luxury-calendar"></div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_javascript %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const calendarEl = document.getElementById('calendar-main');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-            events: {{ eventos_json|safe|default:"[]" }},
-            height: 'auto'
-        });
-
-        document.getElementById('agendaCanvas').addEventListener('shown.bs.offcanvas', () => {
-            calendar.render();
-            calendar.updateSize();
-        });
-    });
-</script>
 {% endblock %}

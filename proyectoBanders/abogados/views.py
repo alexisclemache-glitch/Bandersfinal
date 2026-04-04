@@ -1,72 +1,113 @@
+import os
+import pyotp
+import qrcode
+import io
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Q
-from django.http import Http404, HttpResponse
-from decimal import Decimal
+from django.urls import reverse_lazy
+from django.contrib.auth import get_user_model
+from django.http import FileResponse, Http404, HttpResponse
+from django.conf import settings
 
-# Librerías para MFA (Google Authenticator)
-import pyotp
-import qrcode
-from io import BytesIO
-
-# Importación de modelos y formularios locales
+# Importamos modelos y formularios locales
 from .models import Perfil, DocumentoAdjunto, NotaKeep
-from .forms import PerfilForm, NotaKeepForm, DocumentoForm
+from .forms import PerfilForm, DocumentoForm, NotaKeepForm
 
-# Importación de modelos externos
-from proyectoBanders.expedientes.models import Expediente
-from proyectoBanders.pagos.models import Pago, Abono
-from proyectoBanders.clientes.models import Cliente
+User = get_user_model()
 
 
-# ==============================================================================
-# VISTAS DE SEGURIDAD MFA (GOOGLE AUTHENTICATOR)
-# ==============================================================================
+# ========================================================
+# --- SISTEMA DE SEGURIDAD MFA (LÓGICA FINAL) ---
+# ========================================================
+
+@login_required
+def mfa_verificar_view(request):
+    """
+    Punto de control de identidad:
+    1. Si no tiene mfa_secret, genera uno temporal y muestra el QR.
+    2. Si tiene mfa_secret, pide los 6 dígitos.
+    """
+    perfil = request.user.perfil
+
+    # Si ya verificó esta sesión, directo al dashboard
+    if request.session.get('mfa_authenticated'):
+        return redirect('dashboard:index')
+
+    # Obtener el secreto (de la DB o temporal de la sesión para el registro inicial)
+    secret = perfil.mfa_secret if perfil.mfa_secret else request.session.get('mfa_secret_setup')
+
+    if request.method == 'POST':
+        otp_token = request.POST.get('otp_token', '').strip()
+
+        if not secret:
+            messages.error(request, "Error de sesión. Recargue la página para generar un nuevo QR.")
+            return redirect('abogados:mfa_verificar')
+
+        totp = pyotp.TOTP(secret)
+
+        # Verificación (Incluye bypass '123456' para desarrollo rápido)
+        if totp.verify(otp_token) or otp_token == "123456":
+            # MARCA DE SESIÓN: Esto es lo que lee el Middleware
+            request.session['mfa_authenticated'] = True
+
+            # Si es la primera vez (vinculación), guardamos el secreto en el modelo Perfil
+            if not perfil.mfa_secret:
+                perfil.mfa_secret = secret
+                perfil.save()
+
+            # Limpiar sesión temporal
+            if 'mfa_secret_setup' in request.session:
+                del request.session['mfa_secret_setup']
+
+            messages.success(request, "Verificación exitosa. Bienvenido al sistema.")
+            return redirect('dashboard:index')
+        else:
+            messages.error(request, "El código ingresado es incorrecto.")
+
+    context = {
+        'mfa_configurado': bool(perfil.mfa_secret),
+    }
+    return render(request, 'abogados/mfa_verificar.html', context)
+
 
 @login_required
 def qr_code_image(request):
-    """Genera dinámicamente la imagen PNG del código QR para el perfil"""
+    """Genera dinámicamente la imagen PNG del QR para Google Authenticator."""
     perfil = request.user.perfil
-    uri = perfil.get_totp_uri()
+
+    # Si ya tiene secreto lo usamos, si no, creamos uno nuevo para esta sesión
+    if perfil.mfa_secret:
+        secret = perfil.mfa_secret
+    else:
+        secret = request.session.get('mfa_secret_setup')
+        if not secret:
+            secret = pyotp.random_base32()
+            request.session['mfa_secret_setup'] = secret
+
+    # Configuración del QR
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=request.user.email,
+        issuer_name="Consorcio Banders"
+    )
 
     img = qrcode.make(uri)
-    buf = BytesIO()
-    img.save(buf, format='PNG')
+    buf = io.BytesIO()
+    img.save(buf)
+    buf.seek(0)
     return HttpResponse(buf.getvalue(), content_type="image/png")
 
 
-@login_required
-def verificar_mfa(request):
-    """Pantalla de validación del código de 6 dígitos"""
-    perfil = request.user.perfil
-
-    if request.method == "POST":
-        codigo = request.POST.get("otp_token")
-        totp = pyotp.totp.TOTP(perfil.otp_secret)
-
-        if totp.verify(codigo):
-            request.session['mfa_verificado'] = True
-            if not perfil.mfa_configurado:
-                perfil.mfa_configurado = True
-                perfil.save()
-
-            messages.success(request, "¡Acceso concedido! Bienvenido al sistema.")
-            return redirect('dashboard:dashboard')
-        else:
-            messages.error(request, "Código incorrecto. Verifique su aplicación.")
-
-    return render(request, "abogados/mfa_verificar.html", {
-        "mfa_configurado": perfil.mfa_configurado
-    })
+def espera_aprobacion_view(request):
+    """Página de destino cuando el abogado tiene cuenta pero no el 'check' del Admin."""
+    return render(request, "usuarios/espera_aprobacion.html")
 
 
-# ==============================================================================
-# VISTAS DE GESTIÓN DE COLABORADORES (DIRECTORIO Y PERFIL)
-# ==============================================================================
+# ========================================================
+# --- VISTAS DEL DIRECTORIO Y PERFILES ---
+# ========================================================
 
 class ColaboradoresListView(LoginRequiredMixin, ListView):
     model = Perfil
@@ -74,7 +115,16 @@ class ColaboradoresListView(LoginRequiredMixin, ListView):
     context_object_name = 'colaboradores'
 
     def get_queryset(self):
-        return Perfil.objects.select_related('user').all()
+        # Dr. Cristian (Superusuario) ve a todos para poder aprobarlos
+        if self.request.user.is_superuser:
+            return Perfil.objects.select_related('user').all().order_by(
+                'user__esta_aprobado', 'user__first_name'
+            )
+        # Colaboradores solo ven a sus colegas ya aprobados
+        return Perfil.objects.select_related('user').filter(
+            user__esta_aprobado=True,
+            user__is_active=True
+        ).order_by('user__first_name')
 
 
 class PerfilDetailView(LoginRequiredMixin, DetailView):
@@ -82,131 +132,132 @@ class PerfilDetailView(LoginRequiredMixin, DetailView):
     template_name = 'abogados/perfil_detail.html'
     context_object_name = 'colaborador'
 
-    def get_object(self, queryset=None):
-        pk = self.kwargs.get('pk')
-        try:
-            return get_object_or_404(Perfil, pk=pk)
-        except Http404:
-            perfil, created = Perfil.objects.get_or_create(user=self.request.user)
-            return perfil
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        perfil_visitado = self.object
-        user_asociado = perfil_visitado.user
-
-        # 1. QUERYSET DE EXPEDIENTES (Filtro de seguridad)
-        # Solo expedientes vinculados directamente al abogado o a sus clientes creados
-        exp_qs = Expediente.objects.filter(
-            Q(creado_por=user_asociado) | Q(cliente__creado_por=user_asociado)
-        ).distinct()
-
-        # 2. MÉTRICAS CUANTITATIVAS (Exactitud de Clientes y Casos)
-        context['total_clientes'] = Cliente.objects.filter(creado_por=user_asociado).count()
-        context['casos_activos'] = exp_qs.count()
-
-        # 3. FINANZAS OPTIMIZADAS (Uso de Aggregate para rendimiento)
-        # Calculamos recaudado y total pactado en consultas separadas pero directas
-        recaudado_data = Abono.objects.filter(
-            pago_asociado__expediente__in=exp_qs
-        ).aggregate(total=Sum('monto'))
-
-        total_pactado_data = Pago.objects.filter(
-            expediente__in=exp_qs
-        ).aggregate(total=Sum('total_deuda'))
-
-        total_recaudado = recaudado_data['total'] or Decimal('0.00')
-        total_pactado = total_pactado_data['total'] or Decimal('0.00')
-
-        # 4. PASO DE DATOS AL CONTEXTO (Sincronizado con Tarjeta Banders Infinite)
-        context['total_recaudado'] = total_recaudado
-        context['total_por_cobrar'] = max(total_pactado - total_recaudado, Decimal('0.00'))
-
-        # Datos de UI y Formularios
-        context['es_dueno'] = (self.request.user == user_asociado)
+        perfil = self.object
+        context['es_dueno'] = (self.request.user == perfil.user)
+        context['documentos'] = perfil.documentos.all().order_by('-fecha_subida')
+        context['notas'] = perfil.notas_keep.all().order_by('-fecha_creacion')
         context['doc_form'] = DocumentoForm()
         context['nota_form'] = NotaKeepForm()
-
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        # Seguridad: Solo el dueño puede editar su propia "Bóveda" o "Notas"
-        if self.request.user != self.object.user:
-            messages.error(request, "Acceso denegado. No puede modificar este perfil.")
+        # Solo el dueño del perfil o el admin pueden subir archivos/notas
+        if not (request.user == self.object.user or request.user.is_superuser):
+            messages.error(request, "No tiene permiso para realizar esta acción.")
             return redirect('abogados:perfil_detail', pk=self.object.pk)
 
-        # Acción: Subir Documento a la Bóveda
-        if 'subir_archivo' in request.POST:
+        # 1. Actualizar Multimedia (Foto, Portada, CV)
+        if 'actualizar_imagen' in request.POST:
+            if 'foto' in request.FILES: self.object.foto = request.FILES['foto']
+            if 'portada' in request.FILES: self.object.portada = request.FILES['portada']
+            if 'hoja_vida' in request.FILES: self.object.hoja_vida = request.FILES['hoja_vida']
+            self.object.save()
+            messages.success(request, "Multimedia actualizado correctamente.")
+
+        # 2. Subir Archivo a la Bóveda
+        elif 'subir_archivo' in request.POST:
             form = DocumentoForm(request.POST, request.FILES)
             if form.is_valid():
                 doc = form.save(commit=False)
                 doc.perfil = self.object
                 doc.save()
-                messages.success(request, "Documento guardado en su bOveda.")
+                messages.success(request, "Documento añadido a la bóveda.")
 
-        # Acción: Crear Nota Personal (Keep)
+        # 3. Crear Nota Rápida
         elif 'crear_nota' in request.POST:
             form = NotaKeepForm(request.POST)
             if form.is_valid():
                 nota = form.save(commit=False)
                 nota.perfil = self.object
                 nota.save()
-                messages.success(request, "Nota personal guardada.")
-
-        # Acción: Eliminar Documento
-        elif 'eliminar_archivo' in request.POST:
-            doc_id = request.POST.get('doc_id')
-            get_object_or_404(DocumentoAdjunto, id=doc_id, perfil=self.object).delete()
-            messages.warning(request, "Documento eliminado.")
-
-        # Acción: Eliminar Nota
-        elif 'eliminar_nota' in request.POST:
-            nota_id = request.POST.get('nota_id')
-            get_object_or_404(NotaKeep, id=nota_id, perfil=self.object).delete()
-            messages.warning(request, "Nota eliminada.")
+                messages.success(request, "Nota guardada.")
 
         return redirect('abogados:perfil_detail', pk=self.object.pk)
 
 
-# ==============================================================================
-# ACCIONES ADMINISTRATIVAS Y EDICIÓN
-# ==============================================================================
-
-@user_passes_test(lambda u: u.is_superuser)
-def colaborador_toggle_active(request, pk):
-    perfil = get_object_or_404(Perfil, pk=pk)
-    user_to_toggle = perfil.user
-
-    if user_to_toggle == request.user:
-        messages.error(request, "No puedes desactivar tu propia cuenta.")
-    else:
-        user_to_toggle.is_active = not user_to_toggle.is_active
-        user_to_toggle.save()
-        status = "activado" if user_to_toggle.is_active else "desactivado"
-        messages.info(request, f"Usuario {user_to_toggle.email} {status}.")
-
-    return redirect('abogados:colaboradores_list')
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def colaborador_delete(request, pk):
-    perfil = get_object_or_404(Perfil, pk=pk)
-    perfil.user.delete()
-    messages.success(request, "Colaborador eliminado permanentemente.")
-    return redirect('abogados:colaboradores_list')
-
-
-class AbogadoUpdateView(LoginRequiredMixin, UpdateView):
+class PerfilUpdateView(LoginRequiredMixin, UpdateView):
+    """Vista para editar información de texto (especialidad, bio, etc.)"""
     model = Perfil
     form_class = PerfilForm
-    template_name = 'abogados/abogado_form.html'
-
-    def get_object(self, queryset=None):
-        # Asegura que el usuario edite su propio perfil
-        perfil, created = Perfil.objects.get_or_create(user=self.request.user)
-        return perfil
+    template_name = 'abogados/perfil_form.html'
 
     def get_success_url(self):
+        messages.success(self.request, "Perfil profesional actualizado.")
         return reverse_lazy('abogados:perfil_detail', kwargs={'pk': self.object.pk})
+
+
+# ========================================================
+# --- CONTROL ADMINISTRATIVO ---
+# ========================================================
+
+@login_required
+def colaborador_toggle(request, pk):
+    """Aprueba o suspende a un abogado (Solo Superusuarios)."""
+    if not request.user.is_superuser:
+        messages.error(request, "Acceso denegado. Solo la Dirección puede aprobar cuentas.")
+        return redirect('abogados:colaboradores_list')
+
+    perfil = get_object_or_404(Perfil, pk=pk)
+    u = perfil.user
+    u.esta_aprobado = not u.esta_aprobado
+    u.save()
+
+    estado = "ACTIVADO" if u.esta_aprobado else "SUSPENDIDO"
+    messages.info(request, f"El abogado {u.get_full_name()} ahora está {estado}.")
+    return redirect('abogados:colaboradores_list')
+
+
+@login_required
+def colaborador_delete(request, pk):
+    """Elimina permanentemente a un colaborador (Solo Superusuarios)."""
+    if not request.user.is_superuser:
+        messages.error(request, "Acceso denegado.")
+        return redirect('abogados:colaboradores_list')
+
+    perfil = get_object_or_404(Perfil, pk=pk)
+    usuario = perfil.user
+    usuario.delete()  # El Perfil se borrará automáticamente por el CASCADE
+    messages.success(request, "Colaborador eliminado del sistema.")
+    return redirect('abogados:colaboradores_list')
+
+
+@login_required
+def nota_keep_delete(request, pk):
+    nota = get_object_or_404(NotaKeep, pk=pk)
+    pk_perfil = nota.perfil.pk
+    if request.user == nota.perfil.user or request.user.is_superuser:
+        nota.delete()
+        messages.success(request, "Nota eliminada.")
+    return redirect('abogados:perfil_detail', pk=pk_perfil)
+
+
+@login_required
+def documento_adjunto_delete(request, pk):
+    doc = get_object_or_404(DocumentoAdjunto, pk=pk)
+    pk_perfil = doc.perfil.pk
+    if request.user == doc.perfil.user or request.user.is_superuser:
+        doc.delete()  # El archivo físico se borra gracias a la señal (Signal) en models.py
+        messages.success(request, "Archivo eliminado de la bóveda.")
+    return redirect('abogados:perfil_detail', pk=pk_perfil)
+
+
+@login_required
+def media_protegido(request, ruta_archivo):
+    """
+    Vista de seguridad para servir archivos de MEDIA.
+    Asegura que nadie externo pueda ver los PDFs o fotos mediante URL directa.
+    """
+    full_path = os.path.join(settings.MEDIA_ROOT, ruta_archivo)
+
+    if not os.path.exists(full_path):
+        raise Http404("El documento solicitado no existe.")
+
+    ext = os.path.splitext(full_path)[1].lower()
+    es_imagen = ext in ['.jpg', '.jpeg', '.png', '.webp']
+
+    # Si es imagen, se muestra; si es PDF u otro, se descarga
+    return FileResponse(open(full_path, 'rb'), as_attachment=not es_imagen)

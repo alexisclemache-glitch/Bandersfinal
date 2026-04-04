@@ -2,8 +2,13 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
-from .models import Audiencia
+from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+
+# Importamos el modelo de Expediente para el cambio de estado
+from .models import Audiencia, Expediente
 from .forms import AudienciaForm
+
 
 class CalendarioAudienciasView(TemplateView):
     template_name = 'audiencias/pages-calendar.html'
@@ -38,6 +43,31 @@ class CalendarioAudienciasView(TemplateView):
         context['form'] = AudienciaForm()
         return context
 
+
+# --- NUEVA VISTA PARA CAMBIO DE ESTADO RÁPIDO ---
+@method_decorator(require_POST, name='dispatch')
+class ExpedienteToggleStatusView(View):
+    """Permite cambiar entre ABIERTO y CERRADO con un clic vía AJAX."""
+
+    def post(self, request, pk):
+        expediente = get_object_or_404(Expediente, pk=pk)
+
+        if expediente.estado == 'ABIERTO':
+            expediente.estado = 'CERRADO'
+            nuevo_color = 'bg-danger'  # O el color de tu diseño para cerrado
+        else:
+            expediente.estado = 'ABIERTO'
+            nuevo_color = 'bg-success'
+
+        expediente.save()
+
+        return JsonResponse({
+            'status': 'ok',
+            'nuevo_estado': expediente.estado,
+            'nuevo_color': nuevo_color
+        })
+
+
 class AudienciaActionView(View):
     def post(self, request, id=None):
         instancia = get_object_or_404(Audiencia, id=id) if id else None
@@ -46,6 +76,7 @@ class AudienciaActionView(View):
             form.save()
             return JsonResponse({'status': 'ok'})
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
 
 class AudienciaEliminarView(View):
     def post(self, request, id):

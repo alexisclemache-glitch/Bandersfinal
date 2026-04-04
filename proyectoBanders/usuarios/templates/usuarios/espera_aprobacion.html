@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-6 text-center">
+        <div class="card shadow-lg border-0 rounded-4 p-5">
+            <div class="mb-4">
+                <i class="ri-shield-user-line text-warning display-1"></i>
+            </div>
+            <h2 class="fw-bold">Cuenta en Verificación</h2>
+            <p class="text-muted fs-5 mt-3">
+                Hola, <b>{{ user.get_full_name|default:user.email }}</b>.
+                Tu identidad ha sido vinculada correctamente con Google Authenticator.
+            </p>
+            <div class="alert alert-warning border-0 rounded-pill py-3">
+                <i class="ri-information-line me-2"></i>
+                Actualmente tu perfil está siendo revisado por el equipo legal de <b>Banders</b>.
+            </div>
+            <p class="small text-secondary">Recibirás una notificación cuando tu acceso sea habilitado.</p>
+            <div class="mt-4">
+                <a href="{% url 'account_logout' %}" class="btn btn-outline-danger rounded-pill px-4">
+                    <i class="ri-logout-box-r-line me-1"></i> Salir del sistema
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

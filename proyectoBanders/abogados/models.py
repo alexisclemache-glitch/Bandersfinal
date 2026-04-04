@@ -1,163 +1,145 @@
 import os
-import pyotp
-import qrcode
-from io import BytesIO
-from PIL import Image
-
 from django.db import models
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.core.files.base import ContentFile
 
 
-# --- MODELO DE PERFIL PRINCIPAL ---
+# ========================================================
+# --- MODELO DE PERFIL PROFESIONAL ---
+# ========================================================
+
 class Perfil(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='perfil'
     )
-    # Campos de imagen con compresión
-    foto = models.ImageField(
-        upload_to='perfiles/fotos/',
-        null=True,
-        blank=True,
-        help_text="Tamaño recomendado: 400x400px"
-    )
-    portada = models.ImageField(
-        upload_to='perfiles/portadas/',
-        null=True,
-        blank=True
-    )
-
     # Información profesional
-    especialidad = models.CharField(
-        max_length=100,
-        default="Abogado Jurídico"
-    )
-    telefono = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True
-    )
-    bio = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name="Biografía Profesional"
-    )
-    hoja_vida = models.FileField(
-        upload_to='perfiles/hcv/',
-        null=True,
-        blank=True
-    )
+    especialidad = models.CharField(max_length=100, default="Abogado Jurídico")
+    telefono = models.CharField(max_length=20, null=True, blank=True)
+    bio = models.TextField(null=True, blank=True)
 
-    # --- CAMPOS PARA SEGURIDAD MFA (GOOGLE AUTHENTICATOR) ---
-    otp_secret = models.CharField(
-        max_length=32,
-        default=pyotp.random_base32,
-        editable=False
-    )
-    mfa_configurado = models.BooleanField(
-        default=False,
-        help_text="Indica si el usuario ya vinculó su Google Authenticator"
-    )
+    # Multimedia con rutas organizadas
+    foto = models.ImageField(upload_to='perfiles/fotos/', null=True, blank=True)
+    portada = models.ImageField(upload_to='perfiles/portadas/', null=True, blank=True)
+    hoja_vida = models.FileField(upload_to='perfiles/cv/', null=True, blank=True)
+
+    # --- SEGURIDAD MFA ---
+    # Almacena el secreto Base32 para generar TOTP (Google Authenticator)
+    mfa_secret = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
         verbose_name = "Perfil de Abogado"
         verbose_name_plural = "Perfiles de Abogados"
+        db_table = 'abogados_perfil'
 
     def __str__(self):
-        return f"Perfil de {self.user.get_full_name() or self.user.username}"
+        return self.user.get_full_name() or self.user.email
 
-    # Genera la URL necesaria para el código QR
-    def get_totp_uri(self):
-        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
-            name=self.user.email,
-            issuer_name="Consorcio Jurídico Banders"
-        )
+    @property
+    def get_foto_url(self):
+        """Retorna la foto del perfil o el dummy por defecto."""
+        if self.foto and hasattr(self.foto, 'url'):
+            return self.foto.url
+        return f"{settings.STATIC_URL}images/users/user-dummy.jpg"
 
-    # --- MÉTODO PARA COMPRIMIR IMÁGENES AL GUARDAR ---
-    def save(self, *args, **kwargs):
-        if self.foto:
-            self.foto = self.comprimir_imagen(self.foto, (400, 400))
-        if self.portada:
-            self.portada = self.comprimir_imagen(self.portada, (1200, 400))
-        super().save(*args, **kwargs)
-
-    def comprimir_imagen(self, campo_imagen, tamano):
-        try:
-            extension = os.path.splitext(campo_imagen.name)[1].lower()
-            if extension not in ['.jpg', '.jpeg', '.png', '.webp']:
-                return campo_imagen
-
-            img = Image.open(campo_imagen)
-            if img.width <= tamano[0] and img.height <= tamano[1]:
-                return campo_imagen
-
-            img.thumbnail(tamano, Image.Resampling.LANCZOS)
-            output = BytesIO()
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-
-            img.save(output, format='JPEG', quality=70, optimize=True)
-            output.seek(0)
-            return ContentFile(output.read(), name=os.path.basename(campo_imagen.name))
-        except Exception as e:
-            print(f"⚠️ Error procesando imagen {campo_imagen.name}: {e}")
-            return campo_imagen
+    @property
+    def tiene_mfa(self):
+        """
+        Verifica si el usuario ya vinculó su dispositivo.
+        Usamos bool() para que retorne True si hay un secreto guardado.
+        """
+        return bool(self.mfa_secret)
 
 
-# --- MODELOS ADICIONALES ---
+# ========================================================
+# --- BÓVEDA DE DOCUMENTOS ADJUNTOS ---
+# ========================================================
 
 class DocumentoAdjunto(models.Model):
-    perfil = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='documentos')
+    perfil = models.ForeignKey(
+        Perfil,
+        on_delete=models.CASCADE,
+        related_name='documentos'
+    )
     archivo = models.FileField(upload_to='perfiles/documentos/')
     nombre = models.CharField(max_length=255, default="Archivo sin nombre")
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.nombre} ({self.perfil.user.username})"
+        return f"{self.nombre} - {self.perfil.user.email}"
 
     def extension(self):
-        ext = os.path.splitext(self.archivo.name)[1].lower()
-        iconos = {
-            '.pdf': 'ri-file-pdf-fill text-danger',
-            '.doc': 'ri-file-word-fill text-primary',
-            '.docx': 'ri-file-word-fill text-primary',
-            '.xls': 'ri-file-excel-fill text-success',
-            '.xlsx': 'ri-file-excel-fill text-success',
-            '.jpg': 'ri-image-fill text-info',
-            '.png': 'ri-image-fill text-info',
-        }
-        return iconos.get(ext, 'ri-file-text-fill text-secondary')
+        """Retorna el icono de Iconify basado en la extensión del archivo."""
+        if not self.archivo:
+            return "solar:file-corrupted-bold-duotone"
 
+        ext = os.path.splitext(self.archivo.name)[1].lower()
+
+        iconos = {
+            '.pdf': "solar:file-download-bold-duotone",
+            '.doc': "solar:document-bold-duotone",
+            '.docx': "solar:document-bold-duotone",
+            '.jpg': "solar:gallery-bold-duotone",
+            '.jpeg': "solar:gallery-bold-duotone",
+            '.png': "solar:gallery-bold-duotone",
+            '.webp': "solar:gallery-bold-duotone",
+            '.xls': "solar:rounded-magnifer-bold-duotone",
+            '.xlsx': "solar:rounded-magnifer-bold-duotone",
+        }
+
+        return iconos.get(ext, "solar:file-bold-duotone")
+
+    def nombre_archivo_limpio(self):
+        """Útil para forzar el nombre original en descargas."""
+        return os.path.basename(self.archivo.name)
+
+    class Meta:
+        verbose_name = "Documento"
+        verbose_name_plural = "Bóveda de Documentos"
+
+
+# ========================================================
+# --- NOTAS KEEP (EXPEDIENTE RÁPIDO) ---
+# ========================================================
 
 class NotaKeep(models.Model):
-    perfil = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='notas_keep')
+    perfil = models.ForeignKey(
+        Perfil,
+        on_delete=models.CASCADE,
+        related_name='notas_keep'
+    )
     titulo = models.CharField(max_length=100, default="Nueva Nota")
     contenido = models.TextField()
-    color = models.CharField(max_length=20, default='#ffffff')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Nota Rápida"
-        verbose_name_plural = "Notas Rápidas"
-        ordering = ['-fecha_creacion']
+        verbose_name = "Nota"
+        verbose_name_plural = "Notas Keep"
+        db_table = 'abogados_notakeep'
+
+    def __str__(self):
+        return f"{self.titulo} - {self.perfil.user.email}"
 
 
-# --- SIGNALS ---
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def manejar_perfil_automatico(sender, instance, created, **kwargs):
-    if created:
-        # Crea el perfil automáticamente al registrar un nuevo usuario
-        Perfil.objects.get_or_create(user=instance)
+# ========================================================
+# --- SEÑALES (SIGNALS) PARA LIMPIEZA DE DISCO ---
+# ========================================================
 
-        # Bloqueo inicial para nuevos abogados (requieren activación manual)
-        if not instance.is_superuser:
-            instance.is_active = False
-            instance.save()
-    else:
-        # Asegura que perfiles antiguos tengan su objeto Perfil
-        if not hasattr(instance, 'perfil'):
-            Perfil.objects.create(user=instance)
+@receiver(post_delete, sender=DocumentoAdjunto)
+def borrar_archivo_fisico(sender, instance, **kwargs):
+    """Elimina el archivo del almacenamiento físico al borrar el registro."""
+    if instance.archivo:
+        if os.path.isfile(instance.archivo.path):
+            os.remove(instance.archivo.path)
+
+
+@receiver(post_delete, sender=Perfil)
+def borrar_fotos_perfil(sender, instance, **kwargs):
+    """Elimina todos los archivos multimedia asociados al perfil al borrarlo."""
+    campos = [instance.foto, instance.portada, instance.hoja_vida]
+    for campo in campos:
+        if campo and hasattr(campo, 'path'):
+            if os.path.isfile(campo.path):
+                os.remove(campo.path)

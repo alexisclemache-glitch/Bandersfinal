@@ -1,5 +1,10 @@
 // 
 // _variable.scss
+// config/_variables.scss
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-600: #687d92 !default;
+$prefix:   "bs-" !default;
 //
 
 
@@ -1768,3 +1773,169 @@ $kbd-bg: var(--#{$prefix}body-color);
 $nested-kbd-font-weight: null !default; // Deprecated in v5.2.0, removing in v6
 
 $pre-color: var(--#{$prefix}body-color);
+
+:root {
+  --bs-logo-lg-height: 30px;
+  --bs-logo-sm-height: 28px;
+  --bs-main-nav-width: 260px;
+  --bs-main-nav-width-sm: 75px;
+  --bs-main-nav-item-icon-size: 18px;
+  --bs-main-nav-item-font-size: 15px;
+  --bs-main-nav-item-padding-x: 15px;
+  --bs-main-nav-item-padding-y: 10px;
+  --bs-main-nav-item-margin-y: 2px;
+  --bs-topbar-height: 70px;
+  --bs-footer-height: 60px;
+  --bs-input-border-color: #d8dfe7;
+  --bs-input-focus-border-color: #b0b0bb;
+}
+
+/* Color system - Dark Mode only */
+html[data-bs-theme=dark],
+[data-bs-theme=dark] {
+  --bs-light: #2f3943;
+  --bs-dark: #f1f1f1;
+  --bs-light-rgb: 47, 57, 67;
+  --bs-dark-rgb: 241, 241, 241;
+}
+
+/* Main Menu Light */
+html[data-menu-color=light] {
+  --bs-main-nav-bg: #eeeef3;
+  --bs-main-nav-item-color: #696b84;
+  --bs-main-nav-item-hover-bg: #f8f9fa;
+  --bs-main-nav-item-hover-color: #604ae3;
+  --bs-main-nav-item-active-color: #604ae3;
+  --bs-main-nav-border-color: #eaedf1;
+}
+
+/* Main Menu Dark */
+html[data-menu-color=dark] {
+  --bs-main-nav-bg: #1C252E;
+  --bs-main-nav-item-color: #a8b2b5;
+  --bs-main-nav-item-hover-bg: rgba(255, 255, 255, 0.06);
+  --bs-main-nav-item-hover-color: #ffffff;
+  --bs-main-nav-item-active-color: #eef2f7;
+  --bs-main-nav-border-color: #2f3944;
+}
+
+/* Main Menu Dark (Dark Mode Only) */
+html[data-bs-theme=dark][data-menu-color=dark],
+html[data-bs-theme=dark][data-menu-color=light] {
+  --bs-main-nav-bg: #1C252E;
+  --bs-main-nav-item-color: #afb9cf;
+  --bs-main-nav-item-hover-bg: #303943;
+  --bs-main-nav-item-hover-color: #ffffff;
+  --bs-main-nav-item-active-color: #eef2f7;
+  --bs-main-nav-border-color: #2f3944;
+}
+
+/* Topbar Light */
+html[data-topbar-color=light] {
+  --bs-topbar-bg: #ffffff;
+  --bs-topbar-item-color: #707793;
+  --bs-topbar-search-bg: #e8edf1;
+}
+
+/* Topbar Dark */
+html[data-topbar-color=dark] {
+  --bs-topbar-bg: #141A21;
+  --bs-topbar-item-color: #afb9cf;
+  --bs-topbar-search-bg: #212b36;
+}
+
+/* Topbar Dark (Dark Mode Only) */
+html[data-bs-theme=dark][data-topbar-color=dark],
+html[data-bs-theme=dark][data-topbar-color=light] {
+  --bs-topbar-bg: #141A21;
+  --bs-topbar-item-color: #afb9cf;
+  --bs-topbar-search-bg: #303943;
+}
+
+/*!
+ * Bootstrap  v5.3.3 (https://getbootstrap.com/)
+ * Copyright 2011-2024 The Bootstrap Authors
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
+ */
+:root,
+[data-bs-theme=light] {
+  --bs-white: #ffffff;
+  --bs-black: #000000;
+  --bs-gray: #687d92;
+  --bs-gray-dark: #36404a;
+  --bs-gray-100: #f8f9fa;
+  --bs-gray-200: #eef2f7;
+  --bs-gray-300: #d8dfe7;
+  --bs-gray-400: #b0b0bb;
+  --bs-gray-500: #8486a7;
+  --bs-gray-600: #687d92;
+  --bs-gray-700: #424e5a;
+  --bs-gray-800: #36404a;
+  --bs-gray-900: #323a46;
+  --bs-primary: #604ae3;
+  --bs-secondary: #9035e3;
+  --bs-success: #5cc184;
+  --bs-warning: #f0934e;
+  --bs-info: #45c5cd;
+  --bs-danger: #e96767;
+  --bs-red: #e96767;
+  --bs-yellow: #f8ac59;
+  --bs-green: #5cc184;
+  --bs-teal: #040505;
+  --bs-cyan: #45c5cd;
+  --bs-light: #eef2f7;
+  --bs-dark: #323a46;
+  --bs-primary-rgb: 96, 74, 227;
+  --bs-secondary-rgb: 144, 53, 227;
+  --bs-success-rgb: 92, 193, 132;
+  --bs-warning-rgb: 240, 147, 78;
+  --bs-info-rgb: 69, 197, 205;
+  --bs-danger-rgb: 233, 103, 103;
+  --bs-red-rgb: 233, 103, 103;
+  --bs-yellow-rgb: 248, 172, 89;
+  --bs-green-rgb: 92, 193, 132;
+  --bs-teal-rgb: 4, 5, 5;
+  --bs-cyan-rgb: 69, 197, 205;
+  --bs-light-rgb: 238, 242, 247;
+  --bs-dark-rgb: 50, 58, 70;
+  --bs-primary-text-emphasis: #261e5b;
+  --bs-secondary-text-emphasis: #3a155b;
+  --bs-success-text-emphasis: #254d35;
+  --bs-info-text-emphasis: #1c4f52;
+  --bs-warning-text-emphasis: #603b1f;
+  --bs-danger-text-emphasis: #5d2929;
+  --bs-light-text-emphasis: #424e5a;
+  --bs-dark-text-emphasis: #424e5a;
+  --bs-primary-bg-subtle: #dfdbf9;
+  --bs-secondary-bg-subtle: #e9d7f9;
+  --bs-success-bg-subtle: #def3e6;
+  --bs-info-bg-subtle: #daf3f5;
+  --bs-warning-bg-subtle: #fce9dc;
+  --bs-danger-bg-subtle: #fbe1e1;
+  --bs-light-bg-subtle: #fcfcfd;
+  --bs-dark-bg-subtle: #b0b0bb;
+  --bs-primary-border-subtle: #bfb7f4;
+  --bs-secondary-border-subtle: #d3aef4;
+  --bs-success-border-subtle: #bee6ce;
+  --bs-info-border-subtle: #b5e8eb;
+  --bs-warning-border-subtle: #f9d4b8;
+  --bs-danger-border-subtle: #f6c2c2;
+  --bs-light-border-subtle: #eef2f7;
+  --bs-dark-border-subtle: #8486a7;
+  --bs-white-rgb: 255, 255, 255;
+  --bs-black-rgb: 0, 0, 0;
+  --bs-font-sans-serif: "Figtree", sans-serif;
+  --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  --bs-body-font-family: var(--bs-font-sans-serif);
+  --bs-body-font-size: 14px;
+  --bs-body-font-size: 0.875rem;
+  --bs-body-font-weight: 400;
+  --bs-body-line-height: 1.5;
+  --bs-body-color: #5d7186;
+  --bs-body-color-rgb: 93, 113, 134;
+  --bs-body-bg: #f9f9fc;
+  --bs-body-bg-rgb: 249, 249, 252;
+  --bs-emphasis-color: rgba(93, 113, 134, 0.75);
+  --bs-emphasis-color-rgb: 93, 113, 134;
+  --bs-secondary-color: #687d92;

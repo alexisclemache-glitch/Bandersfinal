@@ -1,0 +1,130 @@
+{% extends "vertical.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %} Configuración de Perfil | Banders {% endblock %}
+
+{% block page_content %}
+<div class="container-fluid py-4" style="background: #f8fafc; min-height: 100vh;">
+    <div class="row justify-content-center">
+        <div class="col-xl-9">
+
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary-soft p-3 rounded-4 me-3" style="background-color: rgba(64, 81, 137, 0.1);">
+                    <iconify-icon icon="solar:user-speak-bold-duotone" class="fs-1 text-primary"></iconify-icon>
+                </div>
+                <div>
+                    <h3 class="fw-800 text-dark mb-0">Configuración de Perfil</h3>
+                    <p class="text-muted mb-0">Gestione su identidad visual y profesional dentro del sistema.</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="card-body p-0">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="p-4 border-bottom border-light">
+                            <h5 class="fw-bold mb-4 d-flex align-items-center">
+                                <iconify-icon icon="solar:gallery-bold-duotone" class="me-2 text-primary"></iconify-icon>
+                                Identidad Visual
+                            </h5>
+                            <div class="row g-4">
+                                <div class="col-md-6 text-center">
+                                    <div class="upload-field p-4 rounded-4 border-dashed bg-light-soft" style="border: 2px dashed #cbd5e1; background-color: #f8fafc;">
+                                        <label class="form-label d-block fw-bold text-dark mb-3">Foto de Perfil</label>
+                                        <iconify-icon icon="solar:camera-add-bold-duotone" class="display-4 text-muted mb-3"></iconify-icon>
+                                        <div class="px-3">
+                                            {% render_field form.foto class="form-control form-control-sm" %}
+                                        </div>
+                                        <small class="text-muted d-block mt-2">Tamaño sugerido: 400x400px (JPG/PNG)</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-center">
+                                    <div class="upload-field p-4 rounded-4 border-dashed bg-light-soft" style="border: 2px dashed #cbd5e1; background-color: #f8fafc;">
+                                        <label class="form-label d-block fw-bold text-dark mb-3">Imagen de Portada</label>
+                                        <iconify-icon icon="solar:scrolling-bold-duotone" class="display-4 text-muted mb-3"></iconify-icon>
+                                        <div class="px-3">
+                                            {% render_field form.portada class="form-control form-control-sm" %}
+                                        </div>
+                                        <small class="text-muted d-block mt-2">Tamaño sugerido: 1200x300px</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4">
+                            <h5 class="fw-bold mb-4 d-flex align-items-center">
+                                <iconify-icon icon="solar:diploma-bold-duotone" class="me-2 text-primary"></iconify-icon>
+                                Detalles Profesionales
+                            </h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold text-dark small">Especialidad Jurídica</label>
+                                    <div class="position-relative d-flex align-items-center">
+                                        <iconify-icon icon="solar:case-minimalistic-bold-duotone" class="position-absolute ms-3 text-muted fs-5"></iconify-icon>
+                                        {% render_field form.especialidad class="form-control ps-5 rounded-3" placeholder="Ej: Abogado Civilista" %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold text-dark small">Teléfono de Contacto</label>
+                                    <div class="position-relative d-flex align-items-center">
+                                        <iconify-icon icon="solar:phone-calling-bold-duotone" class="position-absolute ms-3 text-muted fs-5"></iconify-icon>
+                                        {% render_field form.telefono class="form-control ps-5 rounded-3" placeholder="+593 99 999 9999" %}
+                                    </div>
+                                </div>
+                                <div class="col-12 mb-4">
+                                    <label class="form-label fw-bold text-dark small">Biografía / Resumen Profesional</label>
+                                    {% render_field form.bio class="form-control rounded-4" rows="4" placeholder="Breve descripción de su trayectoria..." %}
+                                </div>
+                                <div class="col-12 mb-4">
+                                    <label class="form-label fw-bold text-dark small">Hoja de Vida Actualizada (PDF)</label>
+                                    <div class="p-3 bg-light rounded-3 d-flex align-items-center border">
+                                        <iconify-icon icon="solar:file-text-bold-duotone" class="fs-2 text-danger me-3"></iconify-icon>
+                                        <div class="flex-grow-1">
+                                            {% render_field form.hoja_vida class="form-control form-control-sm" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-light d-flex justify-content-end gap-3" style="border-radius: 0 0 24px 24px;">
+                            <a href="{% url 'abogados:perfil_detail' object.pk %}" class="btn btn-light px-4 rounded-pill fw-bold">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold shadow-lg" style="box-shadow: 0 10px 20px rgba(64, 81, 137, 0.2);">
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock page_content %}
+
+{% block extra_css %}
+<style>
+    .fw-800 { font-weight: 800; }
+    .form-control:focus {
+        border-color: #405189;
+        box-shadow: 0 0 0 0.25rem rgba(64, 81, 137, 0.1);
+    }
+    input[type=file]::file-selector-button {
+        background: #405189;
+        color: white;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 5px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+    .upload-field:hover {
+        border-color: #405189 !important;
+        transition: 0.3s;
+    }
+</style>
+{% endblock extra_css %}

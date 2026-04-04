@@ -75,7 +75,6 @@
 
             <div class="p-4 bg-white border-top no-print">
                 <div class="max-width-chat mx-auto">
-
                     <div id="file-preview-container" class="d-none mb-3">
                         <div class="file-card-preview border-primary-subtle p-2 bg-light rounded d-flex align-items-center">
                             <i class="ri-file-search-line fs-3 text-primary me-3"></i>
@@ -92,9 +91,7 @@
                             <i class="ri-add-line"></i>
                         </button>
                         <input type="file" id="file-input" class="d-none" onchange="manejarArchivo()" accept=".pdf,.doc,.docx,.jpg,.png">
-
                         <textarea id="user-prompt" class="textarea-premium" rows="1" placeholder="Describe el caso o consulta..." oninput="autoGrow(this)"></textarea>
-
                         <button class="btn-send-premium" onclick="enviarAGemini()" id="btn-enviar">
                             <i class="ri-sparkling-fill me-2"></i> Procesar
                         </button>
@@ -106,16 +103,13 @@
 </div>
 
 <style>
-/* --- ESTILOS MEJORADOS --- */
+/* --- ESTILOS DE INTERFAZ --- */
 .ia-workspace { height: calc(100vh - 70px); background: #fff; font-family: 'Inter', sans-serif; overflow: hidden; }
 .sidebar-professional { background: #fcfcfd; border-right: 1px solid #f0f0f2 !important; }
 .custom-scroll::-webkit-scrollbar { width: 4px; }
 .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
-.history-card {
-    background: #ffffff; border: 1px solid #ececf1; border-radius: 12px;
-    padding: 16px; cursor: pointer; transition: all 0.25s ease;
-}
+.history-card { background: #ffffff; border: 1px solid #ececf1; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.25s ease; }
 .history-card:hover { border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(37, 99, 235, 0.08); }
 
 .icon-box-card { width: 32px; height: 32px; background: #eff6ff; color: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
@@ -140,10 +134,51 @@
 
 .icon-circle-large { width: 80px; height: 80px; background: #f0f7ff; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
 
+/* Botón de copiar */
+.btn-copy-action { color: #64748b; border: 1px solid #e2e8f0; transition: all 0.2s; background: white; }
+.btn-copy-action:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+.btn-copy-action.copied { background: #10b981 !important; color: white !important; border-color: #10b981 !important; }
+
+/* --- REGLAS DE IMPRESIÓN PROFESIONAL --- */
 @media print {
-    .no-print { display: none !important; }
-    body { background: white; }
-    .ai-response-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    .no-print,
+    .sidebar-professional,
+    .header-minimal,
+    .input-container-premium,
+    .btn-copy-action,
+    .user-bubble,
+    .welcome-section {
+        display: none !important;
+    }
+
+    body, .ia-workspace, .row, .col-md-9 {
+        background: white !important;
+        height: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    #chat-window {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        padding: 0 !important;
+    }
+
+    .ai-response-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .contenido-legal-render {
+        font-size: 12pt !important;
+        line-height: 1.5;
+        color: black !important;
+    }
 }
 </style>
 
@@ -171,6 +206,21 @@
         document.getElementById('file-preview-container').classList.add('d-none');
     }
 
+    async function copiarTexto(btn) {
+        const card = btn.closest('.ai-response-card');
+        const contenido = card.querySelector('.contenido-legal-render').innerText;
+        try {
+            await navigator.clipboard.writeText(contenido);
+            const originalHTML = btn.innerHTML;
+            btn.classList.add('copied');
+            btn.innerHTML = `<i class="ri-check-line me-1"></i> ¡Copiado!`;
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        } catch (err) { console.error(err); }
+    }
+
     function cargarEscrito(titulo, contenido) {
         const chat = document.getElementById('chat-window');
         document.querySelector('.welcome-section')?.remove();
@@ -181,7 +231,10 @@
             </div>
             <div class="ai-response-card animate__animated animate__fadeIn">
                 <div class="contenido-legal-render">${contenido}</div>
-                <div class="mt-4 border-top pt-3 text-end no-print">
+                <div class="mt-4 border-top pt-3 d-flex justify-content-end gap-2 no-print">
+                    <button class="btn btn-sm btn-copy-action rounded-pill px-3" onclick="copiarTexto(this)">
+                        <i class="ri-file-copy-line me-1"></i> Copiar Todo
+                    </button>
                     <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="window.print()">
                         <i class="ri-printer-line me-1"></i> Imprimir Borrador
                     </button>
@@ -198,13 +251,9 @@
 
         if (!prompt && !archivoSeleccionado) return;
 
-        // Remover bienvenida si existe
         document.querySelector('.welcome-section')?.remove();
-
-        // Agregar burbuja de usuario
         chat.innerHTML += `<div class="user-bubble no-print">${prompt || 'Analizando archivo adjunto...'}</div>`;
 
-        // Estado cargando
         btn.disabled = true;
         btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Procesando...`;
 
@@ -218,7 +267,6 @@
                 method: 'POST',
                 body: formData
             });
-
             const data = await resp.json();
 
             if (data.status === 'success') {
@@ -230,16 +278,21 @@
                             <button class="btn btn-sm btn-dark rounded-pill px-4" onclick="guardarRegistro('${prompt.substring(0,25) || 'Consulta IA'}')">
                                 <i class="ri-save-line me-1"></i> Guardar en Historial
                             </button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-4" onclick="window.print()">
-                                <i class="ri-printer-line me-1"></i> Imprimir
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-copy-action rounded-pill px-3" onclick="copiarTexto(this)">
+                                    <i class="ri-file-copy-line me-1"></i> Copiar Todo
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-4" onclick="window.print()">
+                                    <i class="ri-printer-line me-1"></i> Imprimir
+                                </button>
+                            </div>
                         </div>
                     </div>`;
             } else {
                 chat.innerHTML += `<div class="alert alert-warning no-print"><strong>Aviso:</strong> ${data.message}</div>`;
             }
         } catch (e) {
-            chat.innerHTML += `<div class="alert alert-danger no-print"><strong>Error:</strong> No se pudo conectar con el servidor.</div>`;
+            chat.innerHTML += `<div class="alert alert-danger no-print"><strong>Error:</strong> No se pudo conectar.</div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = `<i class="ri-sparkling-fill me-2"></i> Procesar`;
@@ -255,20 +308,14 @@
         formData.append('titulo', titulo + "...");
         formData.append('contenido', ultimaRespuestaAI);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
         try {
             const resp = await fetch("{% url 'asistente_ia:guardar_en_notebook' %}", { method: 'POST', body: formData });
-            if(resp.ok) {
-                alert("Guardado correctamente");
-                location.reload();
-            }
-        } catch (error) {
-            alert("Error al guardar");
-        }
+            if(resp.ok) { alert("Guardado"); location.reload(); }
+        } catch (error) { alert("Error"); }
     }
 
     async function eliminarRegistro(id) {
-        if(confirm("¿Eliminar este expediente definitivamente?")) {
+        if(confirm("¿Eliminar expediente?")) {
             let formData = new FormData();
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             await fetch(`/asistente-ia/eliminar-escrito/${id}/`, { method: 'POST', body: formData });

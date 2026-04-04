@@ -1,10 +1,11 @@
+import os
 from django.db import models
-from proyectoBanders.expedientes.models import Expediente
+from django.conf import settings
 from django.db.models import Sum
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 
-# Opciones para métodos de pago y conceptos
+# --- OPCIONES ---
 METODOS_PAGO_CHOICES = [
     ('transferencia', 'Transferencia Bancaria'),
     ('efectivo', 'Efectivo'),
@@ -20,12 +21,15 @@ CONCEPTO_CHOICES = [
 ]
 
 
+# --- FUNCIONES DE AYUDA ---
 def path_comprobante_pago(instance, filename):
-    """Genera la ruta dinámica para guardar los comprobantes por RUT de cliente."""
+    """Genera la ruta dinámica usando el RUT del cliente."""
+    # Accedemos a través de la relación sin importar el modelo arriba
     rut = instance.pago_asociado.expediente.cliente.rut
     return f'clientes/{rut}/pagos/comprobante_{filename}'
 
 
+# --- MODELO PAGO ---
 class Pago(models.Model):
     ESTADOS_PAGO = [
         ('pendiente', 'Pendiente'),
@@ -33,7 +37,12 @@ class Pago(models.Model):
         ('parcial', 'Pago Parcial')
     ]
 
-    expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos_registrados')
+    # CAMBIO CRITICO: Usar string 'expedientes.Expediente' para evitar errores de carga
+    expediente = models.ForeignKey(
+        'expedientes.Expediente',
+        on_delete=models.CASCADE,
+        related_name='pagos_registrados'
+    )
     concepto = models.CharField(max_length=50, choices=CONCEPTO_CHOICES, default='honorarios')
     total_deuda = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     transaccion_id = models.CharField(max_length=100, unique=True)
@@ -42,6 +51,7 @@ class Pago(models.Model):
     notas_pago = models.TextField(blank=True, null=True)
 
     class Meta:
+        app_label = 'pagos'  # Ayuda a Django a identificar la app
         ordering = ['-fecha_creacion']
 
     def __str__(self):
@@ -49,24 +59,13 @@ class Pago(models.Model):
 
     @property
     def total_abonado(self):
-        """Suma todos los abonos relacionados."""
         return self.abonos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
     @property
     def saldo_pendiente(self):
-        """Calcula lo que falta por pagar."""
         return max(self.total_deuda - self.total_abonado, Decimal('0.00'))
 
-    @property
-    def porcentaje_pagado(self):
-        """Retorna el entero para la barra de progreso de la tarjeta."""
-        if self.total_deuda > 0:
-            porcentaje = (self.total_abonado * 100) / self.total_deuda
-            return int(min(porcentaje, 100))
-        return 0
-
     def actualizar_estado(self):
-        """Cambia el estado automáticamente según el total abonado."""
         total = self.total_abonado
         if total >= self.total_deuda:
             nuevo_estado = 'completado'
@@ -80,37 +79,49 @@ class Pago(models.Model):
             self.save(update_fields=['estado'])
 
 
+# --- MODELO ABONO ---
 class Abono(models.Model):
     pago_asociado = models.ForeignKey(Pago, related_name='abonos', on_delete=models.CASCADE)
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     fecha_abono = models.DateTimeField(auto_now_add=True)
-    metodo_pago = models.CharField(max_length=50, choices=METODOS_PAGO_CHOICES, default='transferencia')
+    metodo_pago = models.CharField(max_length=50, choices=METODOS_PAGO_CHOICES, default='efectivo')
+
+    # Relación con Usuario (MFA compatible)
+    usuario_creador = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='abonos_realizados'
+    )
+
     comprobante_file = models.FileField(upload_to=path_comprobante_pago, null=True, blank=True)
     referencia_bancaria = models.CharField(max_length=100, blank=True, null=True)
 
+    class Meta:
+        app_label = 'pagos'
+
     def clean(self):
-        """Validación de seguridad: No permite abonar más de la deuda pendiente."""
-        if not self.pago_asociado_id:
+        # Evitamos errores si el pago aún no está asignado en memoria
+        if not hasattr(self, 'pago_asociado'):
             return
 
-        if not self.pk:  # Nuevo abono
-            if self.monto > self.pago_asociado.saldo_pendiente:
-                raise ValidationError(f"El monto excede el saldo pendiente (${self.pago_asociado.saldo_pendiente})")
-        else:  # Editando abono existente
+        saldo = self.pago_asociado.saldo_pendiente
+
+        if not self.pk:  # Es un abono nuevo
+            if self.monto > saldo:
+                raise ValidationError(f"El monto (${self.monto}) excede el saldo pendiente (${saldo})")
+        else:  # Es una edición
             original = Abono.objects.get(pk=self.pk)
-            # El máximo permitido es el saldo actual + lo que ya valía este abono
-            max_permitido = self.pago_asociado.saldo_pendiente + original.monto
-            if self.monto > max_permitido:
-                raise ValidationError(f"Monto inválido. El máximo permitido es: ${max_permitido}")
+            if self.monto > (saldo + original.monto):
+                raise ValidationError("El monto editado supera la deuda total.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        # Al guardar, disparamos la actualización de estado del Pago padre
         self.pago_asociado.actualizar_estado()
 
     def delete(self, *args, **kwargs):
         pago = self.pago_asociado
         super().delete(*args, **kwargs)
-        # Al eliminar, recalculamos el estado del Pago padre
         pago.actualizar_estado()

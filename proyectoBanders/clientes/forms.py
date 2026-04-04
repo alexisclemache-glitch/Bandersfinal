@@ -1,11 +1,13 @@
 from django import forms
-from .models import Cliente, Expediente
+from .models import Cliente  # Cliente sí está en esta carpeta
 
+# --- IMPORTACIÓN CRÍTICA ---
+# Si tu app de expedientes se llama 'expedientes', cámbialo aquí:
+from proyectoBanders.expedientes.models import Expediente
 
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
-        # MODIFICADO: Se agregan 'direccion' y 'estado_operativo'
         fields = [
             'nombre', 'apellido', 'rut', 'email', 'telefono',
             'foto', 'esta_activo', 'estado_civil',
@@ -14,21 +16,25 @@ class ClienteForm(forms.ModelForm):
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control rounded-3 bg-light border-0 px-3'}),
             'apellido': forms.TextInput(attrs={'class': 'form-control rounded-3 bg-light border-0 px-3'}),
-            'rut': forms.TextInput(
-                attrs={'class': 'form-control rounded-3 bg-light border-0 px-3', 'placeholder': 'Ej: 172345678-9'}),
+            'rut': forms.TextInput(attrs={
+                'class': 'form-control rounded-3 bg-light border-0 px-3',
+                'placeholder': 'Ej: 172345678-9'
+            }),
             'email': forms.EmailInput(attrs={'class': 'form-control rounded-3 bg-light border-0 px-3'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control rounded-3 bg-light border-0 px-3'}),
+            'foto': forms.ClearableFileInput(attrs={
+                'class': 'form-control rounded-3 bg-light border-0 px-3',
+                'id': 'input-foto'  # Agregado para que el JS de previsualización funcione
+            }),
+            'esta_activo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_esta_activo'}),
             'estado_civil': forms.Select(attrs={'class': 'form-select rounded-3 bg-light border-0 px-3'}),
             'provincia': forms.Select(attrs={'class': 'form-select rounded-3 bg-light border-0 px-3'}),
             'canton': forms.TextInput(attrs={'class': 'form-control rounded-3 bg-light border-0 px-3'}),
-
-            # NUEVO: Widget para Dirección (Textarea para que sea más cómodo escribir)
             'direccion': forms.Textarea(attrs={
                 'class': 'form-control rounded-3 bg-light border-0 px-3',
                 'rows': 2,
                 'placeholder': 'Ingrese la dirección domiciliaria completa...'
             }),
-            # NUEVO: Widget para Estado Operativo
             'estado_operativo': forms.Select(attrs={'class': 'form-select rounded-3 bg-light border-0 px-3'}),
         }
 
@@ -62,5 +68,6 @@ class ExpedienteForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Solo mostrar clientes activos en el dropdown
         self.fields['cliente'].empty_label = "Seleccione un cliente..."
         self.fields['cliente'].queryset = Cliente.objects.filter(esta_activo=True)

@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .models import Expediente, NotaExpediente, DocumentoExpediente
 from .forms import ExpedienteForm
+
 
 @login_required
 def lista_expedientes(request):
@@ -36,7 +38,7 @@ def lista_expedientes(request):
 
     expedientes = Expediente.objects.select_related('cliente').prefetch_related(
         'notas_seguimiento', 'archivos_expediente'
-    ).all()
+    ).all().order_by('-id')
 
     return render(request, 'expedientes/expediente_form.html', {
         'expedientes': expedientes,
@@ -44,13 +46,41 @@ def lista_expedientes(request):
         'abrir_modal': abrir_modal
     })
 
+
 @login_required
 def actualizar_estado_expediente(request, pk):
+    """
+    Cambia el estado de ABIERTO a CERRADO y viceversa.
+    Optimizado para responder a la petición AJAX del Calendario.
+    """
     expediente = get_object_or_404(Expediente, pk=pk)
-    expediente.estado = 'finalizado' if expediente.estado == 'abierto' else 'abierto'
+
+    # Normalizamos el string para evitar errores de mayúsculas/minúsculas
+    estado_actual = expediente.estado.upper() if expediente.estado else "ABIERTO"
+
+    if estado_actual == 'ABIERTO':
+        expediente.estado = 'CERRADO'
+        color = 'bg-danger'
+        label = 'CERRADO'
+    else:
+        expediente.estado = 'ABIERTO'
+        color = 'bg-success'
+        label = 'ABIERTO'
+
     expediente.save()
-    messages.info(request, f"Estado de {expediente.titulo} actualizado.")
+
+    # Respuesta para el AJAX del calendario o botones dinámicos
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax'):
+        return JsonResponse({
+            'status': 'ok',
+            'nuevo_estado': label,
+            'nuevo_color': color
+        })
+
+    # Respuesta para clicks normales en la lista de expedientes
+    messages.info(request, f"El expediente {expediente.titulo} ahora está {label}.")
     return redirect('expedientes:lista_expedientes')
+
 
 @login_required
 def eliminar_expediente(request, pk):
@@ -59,6 +89,7 @@ def eliminar_expediente(request, pk):
         expediente.delete()
         messages.warning(request, "Expediente eliminado.")
     return redirect('expedientes:lista_expedientes')
+
 
 @login_required
 def upload_expediente_document(request, expediente_id):

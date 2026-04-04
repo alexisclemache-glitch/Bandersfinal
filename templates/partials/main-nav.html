@@ -1,0 +1,115 @@
+{% load static i18n %}
+
+<div class="app-menu navbar-menu no-print" style="background: #0b1629 !important; border-right: 1px solid #1e293b; position: fixed; height: 100vh; width: 250px; display: flex; flex-direction: column; z-index: 1001;">
+
+    <div class="text-center py-4">
+        {# --- ACTUALIZADO: dashboard:dashboard -> dashboard:index --- #}
+        <a href="{% url 'dashboard:index' %}">
+            <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo" height="45">
+        </a>
+    </div>
+
+    <div class="px-3 mb-4">
+        <div class="d-flex align-items-center p-3 rounded-4" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+            <div class="flex-shrink-0 position-relative">
+                {% if user.perfil.foto %}
+                    <img src="{% url 'media_protegido' user.perfil.foto.name %}"
+                         class="rounded-3"
+                         style="width: 45px; height: 45px; object-fit: cover; border: 2px solid #0ab39c;"
+                         onerror="this.src='https://ui-avatars.com/api/?name={{ user.first_name }}&background=0ab39c&color=fff';">
+                {% else %}
+                    <div class="bg-primary rounded-3 text-white d-flex align-items-center justify-content-center fw-bold" style="width: 45px; height: 45px;">
+                        {{ user.first_name|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-2 border-dark rounded-circle"></span>
+            </div>
+            <div class="flex-grow-1 ms-3 overflow-hidden">
+                <h6 class="text-white mb-0 text-truncate fw-bold" style="font-size: 13px;">
+                    Dr. {{ user.last_name|default:user.username }}
+                </h6>
+                <small class="text-uppercase fw-bold" style="color: #0ab39c; font-size: 9px; letter-spacing: 0.5px;">
+                    {# --- Usamos el campo 'rol' que definimos en tu nuevo formulario --- #}
+                    {{ user.rol|upper|default:"ABOGADO" }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-2 flex-grow-1" style="overflow-y: auto; scrollbar-width: none;">
+        <ul class="nav flex-column">
+            <li class="nav-item px-3 mb-2">
+                <small style="color: #495057; font-size: 10px; font-weight: 800; letter-spacing: 1px;">OPERACIONES CORE</small>
+            </li>
+            <li class="nav-item">
+                {# --- ACTUALIZADO: dashboard:dashboard -> dashboard:index --- #}
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'dashboard:index' %}" style="font-size: 14px;">
+                    <i class="ri-dashboard-fill me-3 fs-18 text-info"></i> Dashboard Central
+                </a>
+            </li>
+
+            <li class="nav-item px-3 mt-3 mb-2">
+                <small style="color: #495057; font-size: 10px; font-weight: 800; letter-spacing: 1px;">GESTIÓN JURÍDICA</small>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'abogados:colaboradores_list' %}" style="font-size: 14px;">
+                    <i class="ri-scales-3-line me-3 fs-18"></i> Directorio Abogados
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'clientes:list' %}" style="font-size: 14px;">
+                    <i class="ri-user-shared-2-line me-3 fs-18"></i> Clientes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'expedientes:lista_expedientes' %}" style="font-size: 14px;">
+                    <i class="ri-briefcase-4-line me-3 fs-18"></i> Expedientes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'audiencias:calendario' %}" style="font-size: 14px;">
+                    <i class="ri-calendar-event-line me-3 fs-18"></i> Agenda de Audiencias
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 text-white opacity-75" href="{% url 'pagos:lista_pagos' %}" style="font-size: 14px;">
+                    <i class="ri-money-dollar-box-line me-3 fs-18"></i> Gestión de Pagos
+                </a>
+            </li>
+
+            <li class="nav-item px-3 mt-3 mb-2">
+                <small style="color: #0ab39c; font-size: 10px; font-weight: 800; letter-spacing: 1px;">INTELIGENCIA ARTIFICIAL</small>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center py-2 px-3 rounded-3 mb-1 fw-bold" href="{% url 'asistente_ia:inbox_ia' %}" style="color: #0ab39c; font-size: 14px;">
+                    <i class="ri-magic-line me-3 fs-18"></i> Asistente Gemini
+                    <span class="badge bg-info ms-auto" style="font-size: 9px; padding: 3px 6px;">PRO</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="p-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.05) !important;">
+        {# --- ACTUALIZADO: Usamos la ruta estándar de Allauth para cerrar sesión --- #}
+        <form action="{% url 'account_logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn w-100 py-2 rounded-3 d-flex align-items-center justify-content-center" style="background: rgba(240,101,72,0.1); color: #f06548; border: none; font-size: 13px; font-weight: 700;">
+                <i class="ri-logout-box-line me-2"></i> Finalizar Sesión
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Forzar que el sidebar desaparezca al imprimir para reportes limpios */
+@media print {
+    .navbar-menu, .app-menu {
+        display: none !important;
+    }
+}
+
+/* Mejora de scroll para el menú lateral */
+.app-menu div::-webkit-scrollbar {
+    display: none;
+}
+</style>

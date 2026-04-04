@@ -8,11 +8,9 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 import uuid, urllib.parse
 
-
 # --- LISTADO DE PAGOS ---
 def lista_pagos(request):
     query = request.GET.get('q', '').strip()
-    # Usamos order_by para que los últimos aparezcan primero
     pagos = Pago.objects.select_related('expediente__cliente').all().order_by('-id')
     expedientes = Expediente.objects.all()
 
@@ -31,14 +29,17 @@ def lista_pagos(request):
         'metodos': METODOS_PAGO_CHOICES
     })
 
-
 # --- CREAR NUEVA OBLIGACIÓN ---
 def crear_nuevo_pago(request):
     if request.method == 'POST':
         try:
             exp_id = request.POST.get('expediente')
             monto = request.POST.get('monto_total')
-            pago = Pago.objects.create(
+            if not monto or Decimal(monto) <= 0:
+                messages.warning(request, "El monto total debe ser mayor a 0.")
+                return redirect('pagos:lista_pagos')
+
+            Pago.objects.create(
                 expediente_id=exp_id,
                 total_deuda=Decimal(monto),
                 transaccion_id=f"TXN-{uuid.uuid4().hex[:8].upper()}"
@@ -48,50 +49,47 @@ def crear_nuevo_pago(request):
             messages.error(request, f"Error al crear transacción: {e}")
     return redirect('pagos:lista_pagos')
 
-
-# --- REGISTRAR ABONO (UNIFICADO Y CORREGIDO) ---
+# --- REGISTRAR ABONO ---
 def registrar_abono(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
 
     if request.method == 'POST':
         try:
             monto_abono = request.POST.get('monto')
-            # Capturamos el método de pago del select del formulario
-            metodo = request.POST.get('metodo_pago') or 'efectivo'
+            # Aseguramos minúsculas para coincidir con METODOS_PAGO_CHOICES
+            metodo = request.POST.get('metodo_pago', 'efectivo').lower()
 
             if monto_abono and Decimal(monto_abono) > 0:
-                # Creamos el abono registrando al usuario logueado
+                # Creamos el abono vinculando al usuario actual
                 Abono.objects.create(
                     pago_asociado=pago,
                     monto=Decimal(monto_abono),
                     metodo_pago=metodo,
-                    usuario_creador=request.user  # <--- Registra quién lo hizo
+                    usuario_creador=request.user
                 )
                 messages.success(request, f"¡Éxito! Abono de ${monto_abono} registrado correctamente.")
             else:
-                messages.warning(request, "Debe ingresar un monto válido mayor a 0.")
+                messages.warning(request, "Debe ingresar un monto válido.")
 
         except ValidationError as e:
-            # Esto captura si el monto excede el saldo pendiente (si tienes la lógica en el model)
-            messages.error(request, f"Error de validación: {e.messages[0]}")
+            # Captura el raise ValidationError del model.clean()
+            messages.error(request, f"{e.message if hasattr(e, 'message') else e.messages[0]}")
         except Exception as e:
             messages.error(request, f"Error inesperado: {e}")
 
     return redirect('pagos:lista_pagos')
-
 
 # --- DETALLE JSON PARA MODALES ---
 def detalle_pago_json(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     cliente = pago.expediente.cliente
 
-    # Incluimos el nombre del usuario que registró cada abono en el JSON
     abonos = [{
         'id': a.id,
         'monto': float(a.monto),
         'fecha': a.fecha_abono.strftime('%d/%m/%Y'),
         'metodo': a.get_metodo_pago_display(),
-        'usuario': a.usuario_creador.get_full_name() or a.usuario_creador.username if a.usuario_creador else "N/A"
+        'usuario': a.usuario_creador.get_full_name() or a.usuario_creador.username if a.usuario_creador else "Sistema"
     } for a in pago.abonos.all().order_by('-fecha_abono')]
 
     msg = f"Estimado {cliente.nombre}, su saldo pendiente en Banders es ${pago.saldo_pendiente:,.2f}"
@@ -106,21 +104,18 @@ def detalle_pago_json(request, pago_id):
         'ws_link': f"https://api.whatsapp.com/send?phone={cliente.telefono}&text={urllib.parse.quote(msg)}"
     })
 
-
-# --- ELIMINACIÓN Y EXPORTACIÓN ---
+# --- ELIMINACIÓN ---
 def eliminar_abono(request, abono_id):
     abono = get_object_or_404(Abono, id=abono_id)
     abono.delete()
-    messages.info(request, "Abono eliminado.")
+    messages.info(request, "Abono eliminado correctamente.")
     return redirect('pagos:lista_pagos')
-
 
 def eliminar_transaccion(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     pago.delete()
     messages.info(request, "Transacción eliminada.")
     return redirect('pagos:lista_pagos')
-
 
 def exportar_pago_pdf(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)

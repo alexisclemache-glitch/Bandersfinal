@@ -7,21 +7,25 @@ logger = logging.getLogger(__name__)
 class UsuariosConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
 
-    # ACTUALIZADO: Ahora apunta a la ruta completa tras el refactor
+    # Ruta completa al paquete de la aplicación
     name = 'proyectoBanders.usuarios'
+
+    # Etiqueta corta para referencias internas
     label = 'usuarios'
 
     verbose_name = 'Gestión de Usuarios Banders'
 
     def ready(self):
         """
-        Este método se ejecuta cuando Django arranca.
-        Aquí 'encendemos' las señales de MFA automático.
+        Este método se ejecuta UNA SOLA VEZ cuando Django arranca.
+        Importamos las señales aquí para evitar importaciones circulares.
         """
         try:
-            # Importación relativa: segura y eficiente dentro del paquete
-            from . import signals
-            print("✅ SISTEMA: Señales de Usuario (MFA) cargadas correctamente.")
+            # Importación absoluta para evitar ambigüedades en el refactor
+            import proyectoBanders.usuarios.signals
+            print("✅ SISTEMA: Señales de Usuario y MFA vinculadas correctamente.")
         except ImportError as e:
-            logger.error(f"❌ ERROR al cargar las señales de usuarios: {e}")
-            print(f"Error crítico en AppConfig de Usuarios: {e}")
+            logger.error(f"❌ ERROR crítico al cargar señales en UsuariosConfig: {e}")
+            # No lanzamos excepción para que el servidor no se caiga,
+            # pero lo marcamos en consola.
+            print(f"Falló la carga de señales: {e}")

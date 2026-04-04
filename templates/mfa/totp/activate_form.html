@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Configurar Google Authenticator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-xl-5">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-5 text-center">
+                <i class="ri-shield-keyhole-fill text-primary display-4"></i>
+                <h2 class="fw-bold mt-3">Seguridad de la Cuenta</h2>
+                <p class="text-muted">Escanea el código QR con tu aplicación <b>Google Authenticator</b> para activar el doble factor.</p>
+
+                <div class="my-4 p-3 bg-white d-inline-block border rounded-3 shadow-sm">
+                    {{ totp_svg|safe }}
+                </div>
+
+                <div class="text-start bg-light p-3 rounded-3 mb-4">
+                    <p class="small mb-0"><strong>Authenticator Secret:</strong> <br>
+                    <code class="text-primary">{{ otplib_uri }}</code></p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                            Activar Protección
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

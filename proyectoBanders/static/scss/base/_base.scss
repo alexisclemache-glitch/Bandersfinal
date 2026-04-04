@@ -1,0 +1,281 @@
+@import "./node_modules/bootstrap/scss/bootstrap";
+
+// AQUÍ VAN TUS ESTILOS BASE
+@import "base"; // El archivo _base.scss que subiste
+
+--bs-tertiary-color: #424e5a;
+  --bs-tertiary-color-rgb: 66, 78, 90;
+  --bs-tertiary-bg: #f8f9fa;
+  --bs-tertiary-bg-rgb: 248, 249, 250;
+  --bs-heading-color: var(--bs-headings-color);
+  --bs-link-color: #8486a7;
+  --bs-link-color-rgb: 132, 134, 167;
+  --bs-link-decoration: none;
+  --bs-link-hover-color: #523fc1;
+  --bs-link-hover-color-rgb: 82, 63, 193;
+  --bs-link-hover-decoration: none;
+  --bs-code-color: #ff86c8;
+  --bs-highlight-color: #5d7186;
+  --bs-highlight-bg: #feeede;
+  --bs-border-width: 1px;
+  --bs-border-style: solid;
+  --bs-border-color: #eaedf1;
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
+  --bs-border-radius: 5.6px;
+  --bs-border-radius: 0.35rem;
+  --bs-border-radius-sm: 2.4px;
+  --bs-border-radius-sm: 0.15rem;
+  --bs-border-radius-lg: 8px;
+  --bs-border-radius-lg: 0.5rem;
+  --bs-border-radius-xl: 16px;
+  --bs-border-radius-xl: 1rem;
+  --bs-border-radius-xxl: 32px;
+  --bs-border-radius-xxl: 2rem;
+  --bs-border-radius-2xl: var(--bs-border-radius-xxl);
+  --bs-border-radius-pill: 800px;
+  --bs-border-radius-pill: 50rem;
+  --bs-box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.03);
+  --bs-box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+  --bs-box-shadow-lg: 0 5px 10px rgba(30, 32, 37, 0.12);
+  --bs-box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+  --bs-focus-ring-width: 2.4px;
+  --bs-focus-ring-width: 0.15rem;
+  --bs-focus-ring-opacity: 0.25;
+  --bs-focus-ring-color: rgba(96, 74, 227, 0.25);
+  --bs-form-valid-color: #5cc184;
+  --bs-form-valid-border-color: #5cc184;
+  --bs-form-invalid-color: #e96767;
+  --bs-form-invalid-border-color: #e96767;
+}
+
+[data-bs-theme=dark] {
+  color-scheme: dark;
+  --bs-body-color: #aab8c5;
+  --bs-body-color-rgb: 170, 184, 197;
+  --bs-body-bg: #141A21;
+  --bs-body-bg-rgb: 20, 26, 33;
+  --bs-emphasis-color: #dee2e6;
+  --bs-emphasis-color-rgb: 222, 226, 230;
+  --bs-secondary-color: #8391a2;
+  --bs-secondary-color-rgb: 131, 145, 162;
+  --bs-secondary-bg: #1C252E;
+  --bs-secondary-bg-rgb: 28, 37, 46;
+  --bs-tertiary-color: #f1f1f1;
+  --bs-tertiary-color-rgb: 241, 241, 241;
+  --bs-tertiary-bg: #2f3943;
+  --bs-tertiary-bg-rgb: 47, 57, 67;
+  --bs-primary-text-emphasis: #a092ee;
+  --bs-secondary-text-emphasis: #bc86ee;
+  --bs-success-text-emphasis: #9ddab5;
+  --bs-info-text-emphasis: #8fdce1;
+  --bs-warning-text-emphasis: #f6be95;
+  --bs-danger-text-emphasis: #f2a4a4;
+  --bs-light-text-emphasis: #f8f9fa;
+  --bs-dark-text-emphasis: #d8dfe7;
+  --bs-primary-bg-subtle: rgba(96, 74, 227, 0.15);
+  --bs-secondary-bg-subtle: rgba(66, 78, 90, 0.15);
+  --bs-success-bg-subtle: rgba(92, 193, 132, 0.15);
+  --bs-info-bg-subtle: rgba(69, 197, 205, 0.15);
+  --bs-warning-bg-subtle: rgba(240, 147, 78, 0.15);
+  --bs-danger-bg-subtle: rgba(233, 103, 103, 0.15);
+  --bs-light-bg-subtle: rgba(var(--bs-light-rgb), 0.04);
+  --bs-dark-bg-subtle: rgba(var(--bs-dark-rgb), 0.15);
+  --bs-primary-border-subtle: #3a2c88;
+  --bs-secondary-border-subtle: #424e5a;
+  --bs-success-border-subtle: #37744f;
+  --bs-info-border-subtle: #29767b;
+  --bs-warning-border-subtle: #90582f;
+  --bs-danger-border-subtle: #8c3e3e;
+  --bs-light-border-subtle: #424e5a;
+  --bs-dark-border-subtle: #8486a7;
+  --bs-heading-color: #aab8c5;
+  --bs-link-color: #afb9cf;
+  --bs-link-hover-color: #bbc4d6;
+  --bs-link-color-rgb: 175, 185, 207;
+  --bs-link-hover-color-rgb: 187, 196, 214;
+  --bs-code-color: #ffb6de;
+  --bs-highlight-color: #aab8c5;
+  --bs-highlight-bg: #634524;
+  --bs-border-color: #29333d;
+  --bs-border-color-translucent: #8391a2;
+  --bs-form-valid-color: #9ddab5;
+  --bs-form-valid-border-color: #9ddab5;
+  --bs-form-invalid-color: #f2a4a4;
+  --bs-form-invalid-border-color: #f2a4a4;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--bs-body-font-family);
+  font-size: var(--bs-body-font-size);
+  font-weight: var(--bs-body-font-weight);
+  line-height: var(--bs-body-line-height);
+  color: var(--bs-body-color);
+  text-align: var(--bs-body-text-align);
+  background-color: var(--bs-body-bg);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+hr {
+  margin: 13.34px 0;
+  margin: 0.83375rem 0;
+  color: inherit;
+  border: 0;
+  border-top: var(--bs-border-width) solid var(--bs-border-color);
+  opacity: 1;
+}
+
+h6, .h6, h5, .h5, h4, .h4, h3, .h3, h2, .h2, h1, .h1 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-family: "Figtree", sans-serif;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--bs-heading-color);
+}
+
+h1, .h1 {
+  font-size: calc(1.35rem + 1.2vw);
+}
+@media (min-width: 1200px) {
+  h1, .h1 {
+    font-size: 2.25rem;
+  }
+}
+
+h2, .h2 {
+  font-size: calc(1.3125rem + 0.75vw);
+}
+@media (min-width: 1200px) {
+  h2, .h2 {
+    font-size: 1.875rem;
+  }
+}
+
+h3, .h3 {
+  font-size: calc(1.275rem + 0.3vw);
+}
+@media (min-width: 1200px) {
+  h3, .h3 {
+    font-size: 1.5rem;
+  }
+}
+
+h4, .h4 {
+  font-size: 18px;
+  font-size: 1.125rem;
+}
+
+h5, .h5 {
+  font-size: 15px;
+  font-size: 0.9375rem;
+}
+
+h6, .h6 {
+  font-size: 12px;
+  font-size: 0.75rem;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 16px;
+  margin-bottom: 1rem;
+}
+
+abbr[title] {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+  cursor: help;
+  -webkit-text-decoration-skip-ink: none;
+          text-decoration-skip-ink: none;
+}
+
+address {
+  margin-bottom: 16px;
+  margin-bottom: 1rem;
+  font-style: normal;
+  line-height: inherit;
+}
+
+ol,
+ul {
+  padding-left: 32px;
+  padding-left: 2rem;
+}
+
+ol,
+ul,
+dl {
+  margin-top: 0;
+  margin-bottom: 16px;
+  margin-bottom: 1rem;
+}
+
+ol ol,
+ul ul,
+ol ul,
+ul ol {
+  margin-bottom: 0;
+}
+
+dt {
+  font-weight: 700;
+}
+
+dd {
+  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
+  margin-left: 0;
+}
+
+blockquote {
+  margin: 0 0 16px;
+  margin: 0 0 1rem;
+}
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+small, .small {
+  font-size: 12px;
+  font-size: 0.75rem;
+}
+
+mark, .mark {
+  padding: 0.1875em;
+  color: var(--bs-highlight-color);
+  background-color: var(--bs-highlight-bg);
+}
+
+sub,
+sup {
+  position: relative;
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load allauth %}
+
+{% block title %}Confirmar Código | Banders{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 mt-5">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-primary">Verificación de Seguridad</h4>
+                    <p class="text-muted">Hemos enviado un código a su correo electrónico.</p>
+                </div>
+
+                <form method="post" action="{% url 'account_login_by_code' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="id_code" class="form-label fw-semibold">Ingrese el Código:</label>
+                        <input type="text" name="code" id="id_code"
+                               class="form-control form-control-lg text-center fw-bold"
+                               placeholder="000000" required autofocus>
+                        {% if form.code.errors %}
+                            <div class="text-danger small mt-1">{{ form.code.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="ri-checkbox-circle-line me-1"></i> Confirmar Acceso
+                        </button>
+                        <a href="{% url 'account_login' %}" class="btn btn-link text-muted">
+                            Cancelar y volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

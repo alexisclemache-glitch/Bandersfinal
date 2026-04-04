@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static i18n crispy_forms_tags %}
+
+{% block title %}{% trans "Registrarse | Banders" %}{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="bg-overlay" style="background-color: #405189; opacity: 0.8; position: absolute; height: 100%; width: 100%; top:0; left:0; z-index: -1;"></div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7 col-xl-6">
+
+                <div class="text-center mb-4">
+                    <a href="/" class="d-inline-block auth-logo">
+                        <img src="{% static 'images/logo-light.png' %}?v=3" alt="Banders Logo" height="80" class="auth-logo-img">
+                    </a>
+                </div>
+
+                <div class="card mt-2 shadow-lg border-0">
+                    <div class="card-body p-4">
+                        <div class="text-center mt-2">
+                            <h5 class="text-danger fw-bold text-uppercase">Consorcio Jurídico Contable Banders</h5>
+                            <h5 class="text-primary fw-bold mt-3">CREAR CUENTA</h5>
+                            <p class="text-muted">Completa los campos para unirte al equipo.</p>
+                        </div>
+
+                        <div class="p-2 mt-4">
+                            <form method="post" action="{% url 'account_signup' %}" class="authentication-form">
+                                {% csrf_token %}
+
+                                <div class="custom-crispy-form">
+                                    {# 1. CAMPO DE EMAIL (Directo, sin IFs raros) #}
+                                    <div class="mb-3">
+                                        {{ form.email|as_crispy_field }}
+                                    </div>
+
+                                    {# 2. DATOS PERSONALES EN FILA #}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            {{ form.first_name|as_crispy_field }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            {{ form.last_name|as_crispy_field }}
+                                        </div>
+                                    </div>
+
+                                    {# 3. ROL PROFESIONAL #}
+                                    <div class="mb-3">
+                                        {{ form.rol|as_crispy_field }}
+                                    </div>
+
+                                    {# 4. SEGURIDAD #}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            {{ form.password1|as_crispy_field }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            {{ form.password2|as_crispy_field }}
+                                        </div>
+                                    </div>
+
+                                    {# ELIMINAMOS EL BUCLE "FOR FIELD IN FORM" PORQUE YA PUSIMOS TODO ARRIBA #}
+
+                                    {# MANEJO DE ERRORES GENERALES #}
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger py-2">
+                                            <ul class="mb-0 list-unstyled" style="font-size: 13px;">
+                                                {% for error in form.non_field_errors %}
+                                                    <li>{{ error }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if redirect_field_value %}
+                                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                                {% endif %}
+
+                                <div class="mt-4 d-grid">
+                                    <button class="btn btn-danger btn-lg fw-bold shadow-sm py-2" type="submit">
+                                        REGISTRARSE <i class="ri-user-add-line ms-1"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0 text-white">¿Ya tienes una cuenta?
+                        <a href="{% url 'account_login' %}" class="fw-bold text-white text-decoration-underline ms-1">Iniciar Sesión</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Tus estilos se mantienen igual, están excelentes */
+    .auth-bg-cover { background: linear-gradient(-45deg, #0ab39c 0%, #405189 100%); position: relative; z-index: 1; }
+    .auth-logo-img { image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3)); }
+    .custom-crispy-form label { font-weight: 600; color: #495057; margin-bottom: 5px; font-size: 13px; }
+    .custom-crispy-form .form-control, .custom-crispy-form .form-select {
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        border: 1px solid #ced4da !important;
+        font-size: 14px;
+        background-color: #fff !important;
+    }
+    .custom-crispy-form .form-control:focus {
+        border-color: #405189 !important;
+        box-shadow: 0 0 0 0.2rem rgba(64, 81, 137, 0.15) !important;
+    }
+    .card { border-radius: 12px; border: none; }
+    .asteriskField { display: none; }
+    .invalid-feedback { font-size: 11px; font-weight: 500; display: block; } /* Asegura que se vean los errores */
+</style>
+{% endblock content %}

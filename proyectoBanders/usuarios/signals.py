@@ -1,34 +1,25 @@
+from django.db.models.signals import post_save
 from django.dispatch import receiver
-from allauth.account.signals import email_confirmed
-from allauth.mfa.models import Authenticator
-import logging
-
-logger = logging.getLogger(__name__)
+from django.conf import settings
+from django.apps import apps
 
 
-@receiver(email_confirmed)
-def activar_mfa_automatico(request, email_address, **kwargs):
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def manejar_usuario_banders(sender, instance, created, **kwargs):
     """
-    Se ejecuta al confirmar el email.
-    Nota: Allauth MFA soporta TOTP, no EMAIL como tipo de autenticador.
+    Crea el perfil profesional automáticamente al registrarse.
     """
-    user = email_address.user
-
-    # El tipo correcto en Allauth es TOTP (para el código QR)
-    # Si intentas usar .EMAIL, seguirá saliendo el AttributeError.
-    mfa_type = Authenticator.Type.TOTP
-
-    # Verificamos si ya tiene MFA activo
-    if not Authenticator.objects.filter(user=user, type=mfa_type).exists():
+    if created:
         try:
-            # IMPORTANTE: No podemos "activar" TOTP automáticamente sin que el usuario
-            # escanee el QR, por lo que aquí lo ideal es solo LOGUEAR el evento
-            # o preparar una configuración básica.
+            # Según tu archivo de modelos de la app abogados:
+            # App: 'abogados', Modelo: 'Perfil'
+            ModeloPerfil = apps.get_model('abogados', 'Perfil')
 
-            # Si lo que quieres es forzar a que el usuario use MFA,
-            # es mejor redirigirlo a la configuración en lugar de crear un objeto vacío.
-
-            print(f"✅ Email confirmado para {user.email}. Listo para configurar MFA.")
+            if getattr(instance, 'rol', None) == 'abogado':
+                # El campo en tu modelo Perfil es 'user', no 'usuario'
+                ModeloPerfil.objects.get_or_create(user=instance)
+                print(f"✅ SISTEMA: Perfil (Colaborador) creado para {instance.email}")
 
         except Exception as e:
-            logger.error(f"❌ ERROR en señal de confirmación para {user.email}: {e}")
+            # Si falla el perfil, NO detenemos el proceso para que llegue al QR
+            print(f"⚠️ SISTEMA: Error al crear perfil profesional: {e}")

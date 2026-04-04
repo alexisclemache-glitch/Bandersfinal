@@ -19,8 +19,14 @@
         {% if user.is_superuser %}
         <div class="col-md-4 text-md-end d-flex align-items-center justify-content-md-end">
             <div class="admin-status px-3 py-2 rounded-4 border d-inline-flex align-items-center bg-white shadow-sm">
-                <span class="status-dot pulse bg-danger me-2"></span>
-                <span class="small fw-700 text-dark">Panel de Control Admin</span>
+                <span class="status-dot pulse {% if pendientes_conteo > 0 %}bg-warning{% else %}bg-success{% endif %} me-2"></span>
+                <span class="small fw-700 text-dark">
+                    {% if pendientes_conteo > 0 %}
+                        {{ pendientes_conteo }} Pendiente{{ pendientes_conteo|pluralize }} por Aprobar
+                    {% else %}
+                        Panel de Control Admin
+                    {% endif %}
+                </span>
             </div>
         </div>
         {% endif %}
@@ -30,52 +36,73 @@
     <div class="row g-4">
         {% for colab in colaboradores %}
         <div class="col-md-6 col-lg-4 col-xl-3">
-            <div class="card-premium h-100">
+            <div class="card-premium h-100 {% if not colab.user.esta_aprobado %}border-warning-subtle bg-light-subtle shadow-none{% endif %}">
 
-                {# ACCIONES DE ADMIN (ACTIVACIÓN Y ELIMINACIÓN) #}
+                {# ACCIONES DE ADMIN #}
                 {% if user.is_superuser %}
                 <div class="admin-actions-container d-flex gap-2">
-                    <a href="{% url 'abogados:activar_colaborador' colab.pk %}"
-                       class="btn-check-premium {% if colab.user.is_active %}is-active{% else %}is-inactive{% endif %}"
-                       title="{% if colab.user.is_active %}Desactivar Acceso{% else %}Activar Acceso{% endif %}">
-                        {% if colab.user.is_active %}
+                    <a href="{% url 'abogados:colaborador_toggle' colab.pk %}"
+                       class="btn-admin-pro {% if colab.user.esta_aprobado %}is-active{% else %}is-inactive{% endif %}"
+                       title="{% if colab.user.esta_aprobado %}Revocar Acceso{% else %}Conceder Acceso{% endif %}">
+                        {% if colab.user.esta_aprobado %}
                             <iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon>
                         {% else %}
-                            <iconify-icon icon="solar:shield-warning-bold-duotone"></iconify-icon>
+                            <iconify-icon icon="solar:shield-warning-bold-duotone" class="text-warning"></iconify-icon>
                         {% endif %}
                     </a>
 
-                    <button type="button" class="btn-trash-premium" data-bs-toggle="modal" data-bs-target="#delModal{{ colab.pk }}">
+                    {% if colab.user != request.user %}
+                    <button type="button" class="btn-admin-pro is-danger" data-bs-toggle="modal" data-bs-target="#delModal{{ colab.pk }}">
                         <iconify-icon icon="solar:trash-bin-minimalistic-bold-duotone"></iconify-icon>
                     </button>
+                    {% endif %}
                 </div>
                 {% endif %}
 
                 <div class="card-content text-center">
                     <div class="avatar-box mb-4">
-                        <div class="avatar-ring"></div>
-                        <img src="{% if colab.foto %}{{ colab.foto.url }}{% else %}{% static 'images/users/avatar-1.jpg' %}{% endif %}" class="profile-img">
-                        <div class="online-badge {% if not colab.user.is_active %}bg-danger shadow-danger{% endif %}"></div>
+                        <div class="avatar-ring {% if not colab.user.esta_aprobado %}border-warning{% endif %}"></div>
+
+                        <img src="{{ colab.get_foto_url }}"
+                             class="profile-img {% if not colab.user.esta_aprobado %}is-offline{% endif %}"
+                             alt="{{ colab.user.username }}">
+
+                        {# INDICADOR DE MFA #}
+                        {% if colab.tiene_mfa %}
+                            <div class="mfa-status-badge bg-success" title="MFA Activado">
+                                <iconify-icon icon="solar:shield-check-bold" class="text-white" style="font-size: 12px;"></iconify-icon>
+                            </div>
+                        {% else %}
+                            <div class="mfa-status-badge bg-danger" title="MFA Pendiente">
+                                <iconify-icon icon="solar:shield-cross-bold" class="text-white" style="font-size: 12px;"></iconify-icon>
+                            </div>
+                        {% endif %}
                     </div>
 
                     <h5 class="fw-800 text-dark mb-1">{{ colab.user.get_full_name|default:colab.user.username }}</h5>
-                    <p class="text-primary-pro fw-700 small mb-3 text-uppercase ls-1">{{ colab.especialidad|default:"Abogado Jurídico" }}</p>
+                    <p class="text-primary-pro fw-700 small mb-1 text-uppercase ls-1">{{ colab.especialidad|default:"Abogado Jurídico" }}</p>
+
+                    {% if not colab.user.esta_aprobado %}
+                        <span class="badge bg-soft-warning text-warning mb-3 px-2 py-1 rounded-pill fw-bold" style="font-size: 0.6rem;">PENDIENTE DE APROBACIÓN</span>
+                    {% else %}
+                        <p class="text-muted small mb-3">{{ colab.user.get_rol_display|default:"Colaborador" }}</p>
+                    {% endif %}
 
                     <div class="stats-mini d-flex justify-content-center gap-3 mb-4">
                         <div class="stat-item text-center">
                             <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
-                                <iconify-icon icon="solar:scale-bold-duotone" class="text-primary-pro" style="font-size: 1.2rem;"></iconify-icon>
-                                <span class="fw-800 text-dark">{{ colab.expedientes.count|default:"0" }}</span>
+                                <iconify-icon icon="solar:folder-with-files-bold-duotone" class="text-primary-pro" style="font-size: 1.2rem;"></iconify-icon>
+                                <span class="fw-800 text-dark">{{ colab.documentos.count|default:"0" }}</span>
                             </div>
-                            <span class="x-small text-muted fw-600 text-uppercase">Justicia</span>
+                            <span class="x-small text-muted fw-600 text-uppercase">Bóveda</span>
                         </div>
                         <div class="stat-divider"></div>
                         <div class="stat-item text-center">
                             <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
-                                <iconify-icon icon="solar:star-bold-duotone" class="text-warning" style="font-size: 1.2rem;"></iconify-icon>
-                                <span class="fw-800 text-dark">4.9</span>
+                                <iconify-icon icon="solar:calendar-date-bold-duotone" class="text-warning" style="font-size: 1.2rem;"></iconify-icon>
+                                <span class="fw-800 text-dark">{{ colab.user.date_joined|date:"Y" }}</span>
                             </div>
-                            <span class="x-small text-muted fw-600 text-uppercase">Rating</span>
+                            <span class="x-small text-muted fw-600 text-uppercase">Ingreso</span>
                         </div>
                     </div>
 
@@ -86,44 +113,51 @@
                 </div>
             </div>
         </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <iconify-icon icon="solar:users-group-two-rounded-bold-duotone" class="text-muted mb-3" style="font-size: 4rem;"></iconify-icon>
+            <h4 class="text-muted">No hay colaboradores registrados todavía.</h4>
+        </div>
         {% endfor %}
     </div>
 </div>
 
-{# MODALES DE ELIMINACIÓN #}
-{% if user.is_superuser %}
-    {% for colab in colaboradores %}
-    <div class="modal fade" id="delModal{{ colab.pk }}" tabindex="-1" aria-hidden="true">
+{# --- AQUÍ LA SOLUCIÓN: MODALES FUERA DEL GRID PARA QUE NO OCUPEN ESPACIO --- #}
+{% for colab in colaboradores %}
+    {% if user.is_superuser and colab.user != request.user %}
+    <div class="modal fade" id="delModal{{ colab.pk }}" tabindex="-1" aria-hidden="true" style="z-index: 9999;">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
                 <div class="modal-body p-4 text-center">
-                    <div class="icon-shape bg-soft-danger text-danger mb-3 mx-auto">
-                        <iconify-icon icon="solar:danger-bold-duotone" width="35"></iconify-icon>
+                    <div class="text-danger mb-3">
+                        <iconify-icon icon="solar:danger-triangle-bold-duotone" style="font-size: 50px;"></iconify-icon>
                     </div>
-                    <h5 class="fw-800 text-dark">¿Confirmar Baja?</h5>
-                    <p class="text-muted small mb-4">Se revocará el acceso de <b>{{ colab.user.username }}</b> de forma definitiva.</p>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light-pro w-100" data-bs-dismiss="modal">Cancelar</button>
-                        <a href="{% url 'abogados:colaborador_delete' colab.pk %}" class="btn btn-danger-pro w-100">Eliminar</a>
+                    <h5 class="fw-800 text-dark">¿Eliminar Colaborador?</h5>
+                    <p class="text-muted small mb-4">Esta acción borrará a <b>{{ colab.user.get_full_name|default:colab.user.email }}</b> permanentemente.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'abogados:colaborador_delete' colab.pk %}" class="btn btn-danger rounded-pill fw-bold py-2">Sí, Eliminar</a>
+                        <button type="button" class="btn btn-light rounded-pill fw-bold py-2" data-bs-dismiss="modal">Cancelar</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% endfor %}
-{% endif %}
+    {% endif %}
+{% endfor %}
+
 {% endblock page_content %}
 
 {% block extra_css %}
 <style>
-    /* VARIABLES Y GENERALES */
+    /* Estilos Base */
     .fw-800 { font-weight: 800; }
     .ls-1 { letter-spacing: 1px; }
     .x-small { font-size: 0.65rem; }
     .text-primary-pro { color: #405189; }
-    .bg-soft-danger { background: rgba(239, 68, 68, 0.1); }
+    .bg-soft-primary { background: rgba(64, 81, 137, 0.1); }
+    .bg-soft-warning { background: rgba(245, 158, 11, 0.1); }
 
-    /* CARD PREMIUM */
+    /* Tarjeta Premium */
     .card-premium {
         background: #fff;
         border-radius: 28px;
@@ -131,97 +165,93 @@
         border: 1px solid #eef2f7;
         transition: all 0.3s ease-in-out;
         position: relative;
+        z-index: 1; /* Bajo para que no tape los modales */
     }
     .card-premium:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 35px rgba(64, 81, 137, 0.1);
     }
+    .border-warning-subtle { border: 1px dashed #f59e0b !important; }
 
-    /* CONTENEDOR DE ACCIONES ADMIN */
+    /* Acciones de Admin - Posicionamiento fijo arriba */
     .admin-actions-container {
         position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 5;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
         opacity: 0;
-        transition: opacity 0.2s ease;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
     }
     .card-premium:hover .admin-actions-container {
         opacity: 1;
+        transform: translateY(0);
     }
-
-    /* BOTÓN TRASH */
-    .btn-trash-premium {
-        width: 35px; height: 35px;
-        border-radius: 10px;
-        background: #fff;
-        color: #ef4444;
-        border: 1px solid #fee2e2;
-        display: flex; align-items: center; justify-content: center;
-        transition: 0.2s;
-        cursor: pointer;
-    }
-    .btn-trash-premium:hover { background: #ef4444; color: #fff; }
-
-    /* BOTÓN CHECK ACTIVACIÓN */
-    .btn-check-premium {
-        width: 35px; height: 35px;
-        border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
+    .btn-admin-pro {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: 0.2s;
         cursor: pointer;
         border: 1px solid transparent;
         text-decoration: none;
-        font-size: 1.1rem;
-    }
-    .btn-check-premium.is-active {
+        font-size: 1.2rem;
         background: #fff;
-        color: #10b981;
-        border: 1px solid #d1fae5;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .btn-check-premium.is-active:hover { background: #10b981; color: #fff; }
+    .btn-admin-pro.is-active { color: #10b981; border-color: #d1fae5; }
+    .btn-admin-pro.is-active:hover { background: #10b981; color: #fff; }
+    .btn-admin-pro.is-inactive { color: #f59e0b; border-color: #fef3c7; }
+    .btn-admin-pro.is-inactive:hover { background: #f59e0b; color: #fff; }
+    .btn-admin-pro.is-danger { color: #ef4444; border-color: #fee2e2; }
+    .btn-admin-pro.is-danger:hover { background: #ef4444; color: #fff; }
 
-    .btn-check-premium.is-inactive {
-        background: #fff;
-        color: #f59e0b;
-        border: 1px solid #fef3c7;
-    }
-    .btn-check-premium.is-inactive:hover { background: #f59e0b; color: #fff; }
-
-    /* AVATAR Y BADGES */
+    /* Avatar y Badges */
     .avatar-box { position: relative; display: inline-block; width: 100px; height: 100px; }
-    .profile-img { width: 100%; height: 100%; object-fit: cover; border-radius: 30px; position: relative; z-index: 2; }
+    .profile-img { width: 100%; height: 100%; object-fit: cover; border-radius: 30px; position: relative; z-index: 2; transition: 0.3s; }
+    .profile-img.is-offline { filter: grayscale(1); opacity: 0.6; }
     .avatar-ring { position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px; border: 2px solid #f1f5f9; border-radius: 35px; transition: 0.4s; }
     .card-premium:hover .avatar-ring { border-color: #405189; transform: rotate(15deg); }
+    .avatar-ring.border-warning { border-color: #f59e0b; border-style: dashed; }
 
-    .online-badge {
-        position: absolute; bottom: 5px; right: 5px;
-        width: 18px; height: 18px;
-        background: #10b981;
-        border: 3px solid #fff;
+    .mfa-status-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        z-index: 3;
+        border: 3px solid #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 4;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
-    .bg-danger { background: #ef4444 !important; }
-    .shadow-danger { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
 
-    /* STATS Y BOTONES */
+    /* Stats y Botón */
     .stat-divider { width: 1px; height: 30px; background: #f1f5f9; }
-    .btn-premium-action { background: #111827; color: #fff; padding: 12px; border-radius: 15px; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.3s; }
-    .btn-premium-action:hover { background: #405189; }
-    .btn-light-pro { background: #f3f4f6; color: #374151; border-radius: 12px; border: none; font-weight: 700; padding: 10px; }
-    .btn-danger-pro { background: #ef4444; color: #fff; border-radius: 12px; border: none; font-weight: 700; padding: 10px; text-decoration: none; text-align: center; }
-
-    /* MODALES */
-    .modal { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); }
-    .icon-shape { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
-
-    /* ANIMACIONES */
-    .pulse { animation: pulse-animation 2s infinite; }
-    @keyframes pulse-animation {
-        0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.4); }
-        100% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    .btn-premium-action {
+        background: #111827;
+        color: #fff;
+        padding: 12px;
+        border-radius: 15px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: 0.3s;
     }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .btn-premium-action:hover { background: #405189; transform: scale(1.02); }
+
+    /* Animaciones */
+    .pulse { animation: pulse-animation 2s infinite; }
+    @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.4); } 100% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 </style>
 {% endblock extra_css %}

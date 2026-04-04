@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Confirmar Código{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-4">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-5 text-center">
+                <i class="ri-mail-send-line text-info display-3 mb-3"></i>
+                <h3 class="fw-bold">Código enviado</h3>
+                <p class="text-muted">Revisa tu correo e ingresa el código de confirmación.</p>
+
+                <form method="post" class="text-start mt-4">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

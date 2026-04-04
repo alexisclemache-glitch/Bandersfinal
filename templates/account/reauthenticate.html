@@ -1,0 +1,39 @@
+{% extends "vertical.html" %}
+{% load i18n %}
+{% load account %}
+
+{% block page_content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height: 80vh; font-family: 'Plus Jakarta Sans', sans-serif;">
+    <div class="card border-0 shadow-lg p-4" style="border-radius: 30px; max-width: 450px; width: 100%; background: #ffffff;">
+        <div class="text-center mb-4">
+            <div class="bg-warning-subtle text-warning d-inline-block p-3 rounded-circle mb-3">
+                <iconify-icon icon="solar:shield-check-bold-duotone" style="font-size: 48px;"></iconify-icon>
+            </div>
+            <h3 class="fw-800 text-dark">Confirmar Identidad</h3>
+            <p class="text-muted small px-3">Por seguridad, ingresa tu contraseña para gestionar el <strong>Multi-Factor (MFA)</strong>.</p>
+        </div>
+
+        <form method="POST" action="{% url 'account_reauthenticate' %}">
+            {% csrf_token %}
+            <div class="mb-4 text-start">
+                <label class="fw-bold small mb-2 text-uppercase text-dark" style="letter-spacing: 1px;">Contraseña de Acceso</label>
+                <div class="position-relative">
+                    <input type="password" name="password" class="form-control form-control-lg rounded-pill border-0 bg-light px-4" placeholder="••••••••" required autofocus>
+                </div>
+            </div>
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <button type="submit" class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow-sm mb-3 text-dark">
+                VERIFICAR Y CONTINUAR
+            </button>
+
+            <div class="text-center">
+                <a href="{% url 'account_reset_password' %}" class="small text-decoration-none text-muted">¿Problemas con tu clave? <span class="text-primary fw-bold">Recuperar</span></a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

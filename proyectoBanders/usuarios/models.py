@@ -1,15 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import post_save
 from django.dispatch import receiver
-from allauth.account.signals import email_confirmed
+from django.apps import apps
 
 
 class UsuarioCustom(AbstractUser):
+    # Identificador principal
     email = models.EmailField(_('dirección de correo'), unique=True)
 
-    # IMPORTANTE: Para que Allauth no busque un 'username' si no lo usas,
-    # puedes dejarlo pero el email es el principal.
+    # El username debe ser opcional en BD porque lo llenamos automáticamente
+    username = models.CharField(
+        _('nombre de usuario'),
+        max_length=150,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
     ROL_CHOICES = [
         ('abogado', 'Abogado'),
@@ -33,36 +41,64 @@ class UsuarioCustom(AbstractUser):
         verbose_name="Foto de Perfil"
     )
 
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    # CAMPO CLAVE PARA EL MIDDLEWARE Y ADAPTER
+    esta_aprobado = models.BooleanField(
+        default=False,
+        verbose_name="¿Usuario Aprobado?"
+    )
+
+    # CONFIGURACIÓN PARA LOGIN POR EMAIL (Requerido para Allauth v6)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'rol']
 
     class Meta:
+        app_label = 'usuarios'
         verbose_name = "Usuario del Consorcio"
         verbose_name_plural = "Usuarios del Consorcio"
         ordering = ['-date_joined']
 
+    def save(self, *args, **kwargs):
+        # NORMALIZACIÓN: Forzamos que el username sea siempre el email
+        # Esto previene errores de integridad en el login de Allauth
+        if self.email:
+            self.username = self.email
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        nombre_completo = self.get_full_name()
-        return f"{nombre_completo if nombre_completo else self.username} - {self.get_rol_display()}"
+        nombre = self.get_full_name()
+        return f"{nombre if nombre else self.email} - {self.get_rol_display()}"
 
 
-# ==========================================
-# SIGNAL: ACTIVACIÓN AUTOMÁTICA DE 6 DÍGITOS
-# ==========================================
-@receiver(email_confirmed)
-def activar_mfa_automatico(request, email_address, **kwargs):
+# --- SEÑALES DE SISTEMA ---
+
+@receiver(post_save, sender=UsuarioCustom)
+def manejar_registro_completo_usuario(sender, instance, created, **kwargs):
     """
-    Cuando el usuario confirma su correo, activamos el MFA por Email
-    automáticamente para que el sistema le pida el código de 6 dígitos.
+    Crea el perfil profesional automáticamente tras el registro exitoso.
+    Esto ocurre justo antes de que el middleware lance el MFA.
     """
-    try:
-        from allauth.mfa.models import Authenticator
+    if created:
+        # Definimos roles que requieren perfil en la app 'abogados'
+        roles_con_perfil = ['abogado', 'administrador']
 
-        # El campo 'data' DEBE ser un dict vacío para evitar el Internal Server Error
-        Authenticator.objects.get_or_create(
-            user=email_address.user,
-            type=Authenticator.Type.EMAIL,
-            defaults={'data': {}}
-        )
-        print(f"DEBUG: MFA activado exitosamente para {email_address.user.email}")
-    except Exception as e:
-        print(f"DEBUG ERROR en Signal MFA: {e}")
+        if instance.rol in roles_con_perfil:
+            try:
+                # Carga dinámica del modelo para evitar importación circular
+                Perfil = apps.get_model('abogados', 'Perfil')
+
+                # Asignamos especialidad por defecto según el rol
+                especialidad_default = 'Dirección' if instance.rol == 'administrador' else 'Derecho General'
+
+                Perfil.objects.get_or_create(
+                    user=instance,
+                    defaults={
+                        'especialidad': especialidad_default,
+                        'bio': 'Miembro del equipo Banders.'
+                    }
+                )
+            except (LookupError, ImportError):
+                # La app abogados no está cargada o el modelo Perfil no existe aún
+                pass
+            except Exception as e:
+                # Log del error pero permitimos que el registro continúe
+                print(f"⚠️ Error al crear perfil automático para {instance.email}: {e}")

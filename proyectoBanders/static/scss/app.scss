@@ -1,25 +1,35 @@
-//
-// app.scss
-//
-
-// Core files
+// ==============================================================================
+// 1. CORE BOOTSTRAP (Herramientas básicas)
+// ==============================================================================
 @import "./node_modules/bootstrap/scss/functions";
-@import "./node_modules/bootstrap/scss/variables";
-@import "config/variables";
-@import "config/variables-dark";
 
+// ==============================================================================
+// 2. TUS VARIABLES (Personalización de colores)
+// ==============================================================================
+@import "config/variables";       // Aquí está tu púrpura #604ae3
+@import "config/variables-dark";
 @import "config/variables-custom";
 @import "config/theme-mode";
 
+// ==============================================================================
+// 3. VARIABLES RESTANTES Y BOOTSTRAP CORE
+// ==============================================================================
+@import "./node_modules/bootstrap/scss/variables";
 @import "./node_modules/bootstrap/scss/bootstrap";
 
-// Structure
+// ==============================================================================
+// 4. TU BASE Y ESTRUCTURA (Resets y Layout)
+// ==============================================================================
+@import "base"; // Tus fuentes Figtree e Inter
+
 @import "structure/topbar";
 @import "structure/vertical";
 @import "structure/page-title";
 @import "structure/footer";
 
-// Bootstrap
+// ==============================================================================
+// 5. COMPONENTES (Uno por uno, sin repetir)
+// ==============================================================================
 @import "components/accordion";
 @import "components/alerts";
 @import "components/avatar";
@@ -46,8 +56,14 @@
 @import "components/tooltip";
 @import "components/widgets";
 
+// ==============================================================================
+// 6. TU PARCHE LEGACY (Importante: va después de los componentes)
+// ==============================================================================
+@import "boostrap_legacy";
 
-// Plugin
+// ==============================================================================
+// 7. PLUGINS EXTERNOS
+// ==============================================================================
 @import "plugins/simplebar";
 @import "plugins/calendar";
 @import "plugins/choice";
@@ -64,13 +80,11 @@
 @import "plugins/range-slider";
 @import "plugins/toastify";
 
-
-// App Page
+// ==============================================================================
+// 8. PÁGINAS ESPECÍFICAS
+// ==============================================================================
 @import "pages/app-chat";
 @import "pages/app-email";
-
-
-// Pages
 @import "pages/icon-demo";
 @import "pages/authentication";
 @import "pages/pricing";

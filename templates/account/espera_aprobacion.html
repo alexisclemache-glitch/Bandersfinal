@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block content %}
+<style>
+    .banders-page-full {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(-45deg, #0ab39c 0%, #405189 100%);
+    }
+    .banders-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .icon-success {
+        font-size: 4rem;
+        color: #0ab39c;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="banders-page-full">
+    <div class="banders-card">
+        <div class="icon-success">
+            <i class="ri-checkbox-circle-fill"></i>
+        </div>
+        <h2 class="fw-bold" style="color: #405189;">¡Correo Verificado!</h2>
+        <p class="text-muted mt-3">
+            Gracias por confirmar tu dirección de correo electrónico.
+            Tu solicitud de acceso al <strong>Consorcio Jurídico Banders</strong> ha sido enviada a revisión.
+        </p>
+        <div class="alert alert-info border-0 small">
+            Un administrador revisará tu perfil pronto. Recibirás un aviso cuando puedas iniciar sesión.
+        </div>
+        <a href="{% url 'account_login' %}" class="btn btn-primary rounded-pill px-4 mt-3">
+            Volver al Inicio
+        </a>
+    </div>
+</div>
+{% endblock %}

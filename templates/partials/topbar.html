@@ -1,0 +1,103 @@
+{% load static i18n %}
+
+<header id="page-topbar" style="background: #ffffff; border-bottom: 1px solid #e9ebec; margin-left: 250px; position: fixed; top: 0; right: 0; left: 0; z-index: 1000; height: 70px;">
+    <div class="px-4 h-100 d-flex align-items-center justify-content-between">
+
+        <form action="{% url 'busqueda:realizar_busqueda' %}" method="GET" class="d-none d-md-block">
+            <div class="position-relative">
+                <input type="text" name="q" class="form-control border-0 bg-light rounded-pill" placeholder="Buscar expedientes..." style="width: 300px; padding-left: 40px;">
+                <i class="ri-search-line position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+            </div>
+        </form>
+
+        <div class="d-flex align-items-center gap-3">
+
+            {# DROPDOWN DE NOTIFICACIONES (SIN CAMBIOS) #}
+            <div class="dropdown topbar-head-dropdown ms-1 header-item">
+                <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                        id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class='ri-notification-3-line fs-22'></i>
+                    {% if total_notificaciones_audiencias > 0 %}
+                    <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">
+                        {{ total_notificaciones_audiencias }}
+                    </span>
+                    {% endif %}
+                </button>
+
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0 shadow-lg border-0" aria-labelledby="page-header-notifications-dropdown" style="width: 320px; border-radius: 15px; overflow: hidden;">
+                    <div class="dropdown-head bg-primary bg-gradient p-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h6 class="m-0 fs-16 fw-semibold text-white">Audiencias Próximas</h6>
+                            <span class="badge bg-light-subtle text-primary fs-11">3 días</span>
+                        </div>
+                    </div>
+
+                    <div class="py-2" style="max-height: 300px; overflow-y: auto;">
+                        {% if notificaciones_audiencias %}
+                            {% for audiencia in notificaciones_audiencias %}
+                            <a href="{% url 'audiencias:calendario' %}" class="text-reset notification-item d-block dropdown-item position-relative py-2 border-bottom border-light">
+                                <div class="d-flex align-items-start">
+                                    <div class="avatar-xs me-3 flex-shrink-0">
+                                        <span class="avatar-title bg-info-subtle text-info rounded-circle fs-16">
+                                            <i class="ri-calendar-event-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mt-0 mb-1 fs-13 fw-semibold">
+                                            {% if audiencia.expediente %}
+                                                {{ audiencia.expediente.cliente.nombre|truncatechars:12 }} |
+                                            {% endif %}
+                                            {{ audiencia.titulo }}
+                                        </h6>
+                                        <div class="fs-12 text-muted">
+                                            <p class="mb-0">
+                                                <i class="ri-time-line me-1"></i>
+                                                {{ audiencia.fecha_inicio|date:"d M, H:i" }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center p-4">
+                                <i class="ri-notification-off-line fs-40 text-muted opacity-25"></i>
+                                <p class="mt-2 text-muted small">No hay audiencias para los próximos 3 días.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-2 border-top text-center bg-light">
+                        <a href="{% url 'audiencias:calendario' %}" class="btn btn-sm btn-link fw-bold text-primary text-decoration-none">
+                            Ver toda la agenda <i class="ri-arrow-right-line align-middle"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {# --- SECCIÓN DE PERFIL CORREGIDA --- #}
+            {% if user.is_authenticated and user.perfil and user.perfil.pk %}
+                <a href="{% url 'abogados:perfil_detail' user.perfil.pk %}" class="d-flex align-items-center gap-2 text-decoration-none">
+            {% else %}
+                <a href="javascript:void(0);" class="d-flex align-items-center gap-2 text-decoration-none opacity-75">
+            {% endif %}
+                <div class="text-end d-none d-lg-block">
+                    <span class="d-block fw-semibold text-dark fs-13">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="d-block text-muted fs-11 text-uppercase">Mi Perfil</span>
+                </div>
+
+                {# CAMBIO CLAVE AQUÍ: De .url a {% url 'media_protegido' ... %} #}
+                {% if user.perfil and user.perfil.foto %}
+                    <img src="{% url 'media_protegido' user.perfil.foto.name %}"
+                         class="rounded-circle border shadow-sm"
+                         width="38" height="38"
+                         style="object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/users/user-dummy.jpg' %}"
+                         class="rounded-circle border"
+                         width="38" height="38">
+                {% endif %}
+            </a>
+        </div>
+    </div>
+</header>

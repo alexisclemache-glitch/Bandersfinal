@@ -6,5 +6,5 @@ app_name = 'dashboard'
 
 urlpatterns = [
     # Al dejar el string vacío '', esta es la ruta raíz de la app
-    path('', DashboardView.as_view(), name='dashboard'),
+    path('', DashboardView.as_view(), name='index'),
 ]

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Iniciar Sesión | Banders" %}{% endblock title %}
+
+{% block content %}
+<style>
+    /* 1. Reset de Lahomes para centrado total y eliminación del lateral */
+    .wrapper, .sidebar-lahomes, .main-nav {
+        display: none !important;
+    }
+
+    body, html {
+        margin: 0; padding: 0; height: 100%;
+        background: #2a406e !important;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* 2. Contenedor Cinemático de Fondo */
+    .banders-page-full {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .bg-gradient-lahomes {
+        background: linear-gradient(-45deg, #0ab39c 0%, #405189 100%) !important;
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;
+    }
+
+    .logo-header {
+        margin-bottom: 30px;
+        z-index: 10;
+    }
+    .auth-logo-img {
+        image-rendering: -webkit-optimize-contrast;
+        filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.3));
+    }
+
+    /* 4. LA TARJETA */
+    .banders-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 50px;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        border: none;
+    }
+
+    .text-cons-juridico {
+        font-size: 14px;
+        color: #f06548 !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 25px;
+    }
+
+    .text-iniciar-sesion {
+        font-size: 24px;
+        color: #405189;
+        font-weight: 700;
+        margin-bottom: 40px;
+    }
+
+    .form-group-banders { margin-bottom: 25px; }
+
+    .law-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 13px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control-banders {
+        border-radius: 8px !important;
+        padding: 12px 15px !important;
+        border: 1px solid #ced4da !important;
+        background-color: #fff !important;
+        font-size: 14px !important;
+        transition: 0.2s ease;
+    }
+
+    .form-control-banders:focus {
+        border-color: #405189 !important;
+        box-shadow: 0 0 0 0.2rem rgba(64, 81, 137, 0.15) !important;
+    }
+
+    .btn-coral-execute {
+        width: 100%;
+        background-color: #f06548 !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        padding: 16px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 4px 6px rgba(240, 101, 72, 0.2);
+    }
+
+    .btn-coral-execute:hover {
+        background-color: #db593e !important;
+        transform: translateY(-2px);
+    }
+
+    /* Estilo para el link de registro arriba del botón */
+    .register-link-container {
+        margin-top: 30px;
+        margin-bottom: 15px;
+        font-size: 13px;
+    }
+
+    .register-link-container a {
+        color: #405189;
+        text-decoration: none;
+        font-weight: 700;
+        border-bottom: 1px solid rgba(64, 81, 137, 0.3);
+        transition: 0.2s;
+    }
+
+    .register-link-container a:hover {
+        color: #f06548;
+        border-bottom-color: #f06548;
+    }
+</style>
+
+<div class="banders-page-full">
+    <div class="bg-gradient-lahomes"></div>
+
+    <div class="logo-header text-center">
+        <img src="{% static 'images/logo-light.png' %}?v=3" alt="Logo Banders" height="80" class="auth-logo-img">
+    </div>
+
+    <div class="banders-card">
+        <div class="card-header text-center border-0 bg-transparent p-0">
+            <h5 class="text-cons-juridico">Consorcio Jurídico Banders</h5>
+            <h5 class="text-iniciar-sesion">Iniciar Sesión</h5>
+        </div>
+
+        <div class="p-2 mt-4">
+            <form method="POST" action="{% url 'account_login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="remember" value="true">
+
+                {% if form.errors %}
+                <div class="alert alert-danger p-2 small border-0 text-center rounded-3 mb-4" role="alert" style="background: rgba(239, 101, 72, 0.1); color: #db593e;">
+                    {% trans "Credenciales incorrectas. Verifique e intente de nuevo." %}
+                </div>
+                {% endif %}
+
+                <div class="form-group-banders">
+                    <label class="law-label">Correo electrónico</label>
+                    <input type="email" name="login" class="form-control form-control-banders"
+                           placeholder="nombre@ejemplo.com" required autofocus
+                           value="{{ form.login.value|default:'' }}">
+                </div>
+
+                <div class="form-group-banders">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="law-label">Contraseña</label>
+                        <a href="{% url 'account_reset_password' %}" class="small text-muted text-decoration-underline" style="font-size: 11px;">¿Olvidó su clave?</a>
+                    </div>
+                    <input type="password" name="password" class="form-control form-control-banders" placeholder="••••••••" required>
+                </div>
+
+                <div class="register-link-container text-center">
+                    <span class="text-muted">¿Eres nuevo en el consorcio?</span>
+                    <a href="{% url 'account_signup' %}">Regístrate aquí</a>
+                </div>
+
+                <div class="mt-2">
+                    <button type="submit" class="btn-coral-execute">
+                        ENTRAR <i class="ri-login-box-line ms-1"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <p class="mb-0 text-white-50 small">&copy; 2026 Consorcio Jurídico Contable Banders. Todos los derechos reservados.</p>
+    </div>
+</div>
+{% endblock content %}

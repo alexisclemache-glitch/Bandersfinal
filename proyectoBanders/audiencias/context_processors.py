@@ -1,20 +1,19 @@
 from django.utils import timezone
 from .models import Audiencia
 
-def notificaciones_audiencias(request):
-    """
-    Muestra las audiencias de todo el consorcio para los próximos 3 días.
-    Útil para el dropdown de notificaciones en el navbar.
-    """
-    if request.user.is_authenticated:
-        ahora = timezone.now()
-        # Ampliamos el rango a 3 días
-        limite_3_dias = ahora + timezone.timedelta(days=3)
 
-        # 🛠️ CORRECCIÓN: 'caso' cambiado por 'expediente'
-        # 🚀 OPTIMIZACIÓN: Traemos cliente para evitar múltiples consultas SQL
+def notificaciones_audiencias(request):
+    if request.user.is_authenticated:
+        # --- CORRECCIÓN AQUÍ ---
+        # Usamos .replace para que busque desde el primer segundo de HOY
+        ahora_mismo = timezone.now()
+        inicio_hoy = ahora_mismo.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Mantenemos el límite de 3 días
+        limite_3_dias = ahora_mismo + timezone.timedelta(days=3)
+
         proximas = Audiencia.objects.filter(
-            fecha_inicio__gte=ahora,
+            fecha_inicio__gte=inicio_hoy,  # Ahora sí incluye las de hace unos minutos
             fecha_inicio__lte=limite_3_dias
         ).select_related(
             'expediente',

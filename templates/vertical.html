@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="wrapper">
+    {# EL SECRETO: El menú solo se incluye si ya entramos #}
+    {% if user.is_authenticated %}
+        {% include 'partials/menu.html' %}
+    {% endif %}
+
+    {# Si no hay usuario, aplicamos la clase 'full-page' #}
+    <div class="page-content {% if not user.is_authenticated %}full-page{% endif %}">
+        <div class="container-fluid">
+            {% block page_content %}{% endblock page_content %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS para cuando el usuario NO está logueado (LOGIN) */
+    .full-page {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f7fa; /* Fondo limpio */
+    }
+
+    /* CSS para cuando SÍ está logueado (DASHBOARD) */
+    .wrapper:not(:has(.full-page)) .page-content {
+        margin-left: 280px; /* Espacio para el menú lateral de Lahomes */
+        transition: all 0.3s ease;
+    }
+
+    @media (max-width: 992px) {
+        .page-content { margin-left: 0 !important; }
+    }
+</style>
+{% endblock content %}

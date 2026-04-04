@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 # Importación de modelos
 from .models import Cliente, DocumentoCliente
+from .forms import ClienteForm  # <--- IMPORTANTE: Importamos el formulario corregido
 from proyectoBanders.expedientes.models import Expediente, NotaExpediente, DocumentoExpediente
 
 # --- VISTAS DE CLIENTE ---
@@ -21,12 +22,12 @@ class ClienteListView(LoginRequiredMixin, ListView):
 
 class ClienteCreateView(LoginRequiredMixin, CreateView):
     model = Cliente
-    fields = ['nombre', 'apellido', 'rut', 'email', 'telefono', 'foto',
-              'estado_civil', 'provincia', 'canton', 'direccion', 'estado_operativo']
+    form_class = ClienteForm  # <--- CAMBIO CLAVE: Usamos form_class en lugar de fields
     template_name = 'clientes/cliente_form.html'
     success_url = reverse_lazy('clientes:list')
 
     def form_valid(self, form):
+        # Al usar form_class, Django ya incluye request.FILES automáticamente
         form.instance.creado_por = self.request.user
         messages.success(self.request, "✅ Cliente registrado con éxito.")
         return super().form_valid(form)
@@ -37,6 +38,7 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Traemos expedientes con sus notas y archivos para optimizar carga
         context['expedientes'] = self.object.expedientes_juridicos.all().prefetch_related(
             'notas_seguimiento', 'archivos_expediente'
         ).order_by('-fecha_inicio')
@@ -44,6 +46,7 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        # Gestión de Notas Rápidas desde el perfil
         if 'btn_nota_expediente' in request.POST:
             expediente_id = request.POST.get('expediente_id')
             contenido = request.POST.get('contenido')
@@ -55,11 +58,11 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
 
 class ClienteUpdateView(LoginRequiredMixin, UpdateView):
     model = Cliente
-    fields = ['nombre', 'apellido', 'rut', 'email', 'telefono', 'foto',
-              'estado_civil', 'provincia', 'canton', 'direccion', 'estado_operativo']
+    form_class = ClienteForm  # <--- CAMBIO CLAVE: Usamos form_class en lugar de fields
     template_name = 'clientes/cliente_form.html'
 
     def get_success_url(self):
+        messages.success(self.request, "✅ Datos del cliente actualizados.")
         return reverse_lazy('clientes:detail', kwargs={'pk': self.object.pk})
 
 class ClienteDeleteView(LoginRequiredMixin, DeleteView):
@@ -70,6 +73,7 @@ class ClienteDeleteView(LoginRequiredMixin, DeleteView):
 
 class ExpedienteCreateView(LoginRequiredMixin, CreateView):
     model = Expediente
+    # Aquí puede mantener fields o crear un ExpedienteForm similar al de Cliente
     fields = ['titulo', 'numero_proceso', 'tipo_expediente', 'estado', 'provincia_judicial', 'juzgado_unidad', 'descripcion']
     template_name = 'expedientes/expediente_form.html'
 
@@ -83,27 +87,34 @@ class ExpedienteCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('clientes:detail', kwargs={'pk': self.object.cliente.pk})
 
-# --- GESTIÓN DE DOCUMENTOS (FUNCIONES) ---
+# --- GESTIÓN DE DOCUMENTOS Y ESTADOS ---
 
 @login_required
 def upload_document(request, pk):
     """Sube archivos a la bóveda personal del cliente (DocumentoCliente)"""
     cliente = get_object_or_404(Cliente, pk=pk)
+
     if request.method == 'POST':
         archivo = request.FILES.get('archivo')
-        nombre_form = request.POST.get('nombre')
+        titulo_form = request.POST.get('titulo')
         categoria_form = request.POST.get('categoria', 'otros')
         descripcion_form = request.POST.get('descripcion', '')
 
-        if archivo:
-            DocumentoCliente.objects.create(
-                cliente=cliente,
-                archivo=archivo,
-                titulo=nombre_form,      # Usamos 'titulo' según tu modelo
-                categoria=categoria_form,
-                descripcion=descripcion_form
-            )
-            messages.success(request, "📁 Documento guardado en la bóveda.")
+        if archivo and titulo_form:
+            try:
+                DocumentoCliente.objects.create(
+                    cliente=cliente,
+                    archivo=archivo,
+                    titulo=titulo_form,
+                    categoria=categoria_form,
+                    descripcion=descripcion_form
+                )
+                messages.success(request, f"✅ Documento '{titulo_form}' subido correctamente.")
+            except Exception as e:
+                messages.error(request, f"❌ Error al guardar: {e}")
+        else:
+            messages.warning(request, "⚠️ El título y el archivo son campos obligatorios.")
+
     return redirect('clientes:detail', pk=pk)
 
 @login_required
@@ -120,22 +131,25 @@ def upload_expediente_document(request, expediente_id):
 
 @login_required
 def delete_document(request, pk):
+    """Elimina documento de la bóveda"""
     doc = get_object_or_404(DocumentoCliente, pk=pk)
     cliente_id = doc.cliente.id
     doc.delete()
+    messages.info(request, "Documento eliminado.")
     return redirect('clientes:detail', pk=cliente_id)
 
 @login_required
 def delete_escrito(request, pk):
+    """Elimina archivo adjunto de un expediente"""
     doc = get_object_or_404(DocumentoExpediente, pk=pk)
     cliente_id = doc.expediente.cliente.id
     doc.delete()
+    messages.info(request, "Archivo de expediente eliminado.")
     return redirect('clientes:detail', pk=cliente_id)
-
 
 @login_required
 def toggle_cliente_status(request, pk):
-    """Cambia el estado de activo a inactivo y viceversa"""
+    """Cambia el estado de activo/inactivo"""
     cliente = get_object_or_404(Cliente, pk=pk)
     cliente.esta_activo = not cliente.esta_activo
     cliente.save()

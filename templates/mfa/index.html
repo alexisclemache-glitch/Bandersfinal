@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5 text-center">
+                    <h2 class="fw-bold text-primary mb-4">Seguridad Multi-Factor (MFA)</h2>
+
+                    {# Verificamos si el usuario ya tiene TOTP activo usando la lógica de Allauth v6 #}
+                    {% if authenticators.totp %}
+                        <div class="alert alert-success d-inline-block px-4 border-0 bg-success-subtle text-success">
+                            <iconify-icon icon="solar:shield-check-bold" class="me-2 fs-4 align-middle"></iconify-icon>
+                            <strong>MFA ACTIVO:</strong> Tu cuenta está protegida.
+                        </div>
+                        <div class="mt-4">
+                            {# Ruta nativa para desactivar #}
+                            <a href="{% url 'mfa_deactivate_totp' %}" class="btn btn-outline-danger rounded-pill px-4">
+                                Desactivar MFA
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="mb-4">
+                            <iconify-icon icon="solar:shield-warning-bold-duotone" class="text-warning display-4"></iconify-icon>
+                        </div>
+                        <p class="text-muted mb-4">Protege tu cuenta activando el Multi-Factor Authentication (MFA).</p>
+
+                        {# Ruta nativa para activar el QR #}
+                        <a href="{% url 'mfa_activate_totp' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
+                            Configurar QR (MFA)
+                        </a>
+                    {% endif %}
+
+                    <hr class="my-5 opacity-25">
+
+                    <div class="d-flex justify-content-center">
+                        {# CORRECCIÓN AQUÍ: Cambiamos 'dashboard:dashboard' por 'dashboard:index' #}
+                        <a href="{% url 'dashboard:index' %}" class="btn btn-light rounded-pill px-4 d-flex align-items-center fw-bold text-muted border">
+                            <iconify-icon icon="solar:home-2-bold-duotone" class="me-2 fs-20"></iconify-icon>
+                            Volver al Inicio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

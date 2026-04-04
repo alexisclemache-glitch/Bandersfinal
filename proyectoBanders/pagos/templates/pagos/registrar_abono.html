@@ -27,12 +27,12 @@
                         <span class="fw-extrabold text-primary" style="font-size: 1.2rem;">${{ pago.saldo_pendiente|floatformat:"0" }}</span>
                     </div>
                     <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-primary" style="width: 70%"></div>
+                        <div class="progress-bar bg-primary" style="width: {{ pago.porcentaje_pagado }}%"></div>
                     </div>
                 </div>
             </div>
 
-            <form method="POST" id="pagoForm">
+            <form method="POST" id="pagoForm" action="{% url 'pagos:registrar_abono' pago.id %}">
                 {% csrf_token %}
 
                 <div class="mb-3">
@@ -49,9 +49,10 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold small text-muted">MÉTODO DE PAGO</label>
                     <select name="metodo_pago" class="form-select border-0 bg-light py-2" style="border-radius: 12px; font-weight: 600;">
-                        <option value="Transferencia">🏦 Transferencia Bancaria</option>
-                        <option value="Efectivo" selected>💵 Efectivo</option>
-                        <option value="Tarjeta">💳 Tarjeta Crédito/Débito</option>
+                        <option value="transferencia">🏦 Transferencia Bancaria</option>
+                        <option value="efectivo" selected>💵 Efectivo</option>
+                        <option value="tarjeta">💳 Tarjeta Crédito/Débito</option>
+                        <option value="deposito">📂 Depósito</option>
                     </select>
                 </div>
 
@@ -72,7 +73,7 @@
                     <div class="p-2 border rounded-3 bg-light-subtle d-flex justify-content-between align-items-center">
                         <div>
                             <span class="d-block fw-bold text-dark small">${{ abono.monto|floatformat:"0" }}</span>
-                            <small class="text-muted" style="font-size: 0.7rem;">Por: {{ abono.usuario_creador.username }}</small>
+                            <small class="text-muted" style="font-size: 0.7rem;">Por: {{ abono.usuario_creador.username|default:"Sistema" }}</small>
                         </div>
                         <span class="badge bg-white text-muted border fw-normal" style="font-size: 0.65rem;">{{ abono.fecha_abono|date:"d/m/Y" }}</span>
                     </div>
@@ -95,11 +96,12 @@
         const btnConfirmar = document.getElementById('btnConfirmar');
         const errorMonto = document.getElementById('errorMonto');
 
-        const saldoMax = parseFloat("{{ pago.saldo_pendiente|floatformat:'0' }}");
+        // Saldo sin formato para cálculos en JS
+        const saldoMax = parseFloat("{{ pago.saldo_pendiente }}");
 
-        // VALIDACIÓN DE MONTO
         inputMonto.addEventListener('input', function() {
-            if (parseFloat(this.value) > saldoMax) {
+            const montoVal = parseFloat(this.value) || 0;
+            if (montoVal > saldoMax) {
                 errorMonto.classList.remove('d-none');
                 btnConfirmar.disabled = true;
                 btnConfirmar.style.opacity = '0.5';
@@ -110,19 +112,13 @@
             }
         });
 
-        // LÓGICA DE WHATSAPP AL ENVIAR
         pagoForm.addEventListener('submit', function(e) {
-            // Captura de datos
+            // Capturamos datos para el mensaje
             const monto = inputMonto.value;
             const cliente = "{{ pago.expediente.cliente.nombre }} {{ pago.expediente.cliente.apellido }}";
             const colaborador = "{{ request.user.get_full_name|default:request.user.username }}";
-            const saldoFinal = saldoMax - parseFloat(monto);
-
-            // Limpieza de teléfono (Elimina espacios y caracteres raros)
+            const saldoFinal = (saldoMax - parseFloat(monto)).toFixed(0);
             let telefono = "{{ pago.expediente.cliente.telefono }}".replace(/\D/g,'');
-
-            // Si el teléfono no tiene código de país, podrías añadirlo manualmente (ej: 593 para Ecuador)
-            // if (telefono.length === 9) telefono = "593" + telefono;
 
             const mensaje = `*RECIBO DE PAGO - BANDERS*%0A%0A` +
                             `Hola *${cliente}*, se ha registrado su abono de: *Dólares ${monto}*%0A` +
@@ -132,8 +128,10 @@
 
             const urlWs = `https://api.whatsapp.com/send?phone=${telefono}&text=${mensaje}`;
 
-            // Abrimos WhatsApp en nueva ventana
+            // Abrimos WhatsApp en pestaña nueva
             window.open(urlWs, '_blank');
+
+            // Dejamos que el formulario se envíe solo a la base de datos
         });
 
         // Bloqueo de puntos y comas
