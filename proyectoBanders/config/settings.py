@@ -2,25 +2,25 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from django.contrib.messages import constants as messages
 
 # ==========================================
 # 1. RUTAS BÁSICAS Y CARGA DE ENTORNO
 # ==========================================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Asegurar que Django encuentre los módulos del proyecto
 sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, os.path.join(BASE_DIR, 'proyectoBanders'))
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # ==========================================
-# 2. SEGURIDAD (IMPORTANTE: DEBUG DEBE SER FALSE)
+# 2. SEGURIDAD
 # ==========================================
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-banders-2026-security-key')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
-# CAMBIO VITAL: DEBUG debe ser False para que las reglas de HTTPS funcionen
+# DEBUG debe ser False en producción para activar reglas de HTTPS
 DEBUG = False
 
 ALLOWED_HOSTS = [
@@ -80,7 +80,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
-    'proyectoBanders.usuarios.middleware.ProtegerMFAMiddleware',
+    'proyectoBanders.usuarios.middleware.ProtegerMFAMiddleware', # Protector de QR
 ]
 
 ROOT_URLCONF = 'proyectoBanders.config.urls'
@@ -131,15 +131,23 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # ==========================================
-# 8-10. ALLAUTH, MFA Y CRISPY
+# 8-10. ALLAUTH, MFA Y CRISPY (ACTUALIZADO)
 # ==========================================
-ACCOUNT_ADAPTER = 'proyectoBanders.usuarios.adapter.AprobacionAdminAdapter'
+# ACCOUNT_ADAPTER = 'proyectoBanders.usuarios.adapter.AprobacionAdminAdapter'
+
+# CONFIGURACIÓN MODERNA ALLAUTH
 ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email']
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
+# SOLUCIÓN AL REGISTRO: Inicia sesión automático para que el middleware salte al QR
+ACCOUNT_LOGIN_ON_SIGNUP = True 
+
 ACCOUNT_FORMS = {
     'signup': 'proyectoBanders.usuarios.forms.UsuarioRegistroForm',
     'login': 'proyectoBanders.usuarios.forms.UsuarioLoginForm',
 }
+
 MFA_SUPPORTED_TYPES = ['totp']
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
@@ -156,15 +164,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'account_login'
 
+# CONFIGURACIÓN SMTP GMAIL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'consorciojuridicobanders@gmail.com')
+EMAIL_HOST_USER = 'consorciojuridicobanders@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = 'Consorcio Banders <consorciojuridicobanders@gmail.com>'
 
 # ==========================================
-# 14. CONFIGURACIÓN DE PRODUCCIÓN (CORREGIDA)
+# 14. CONFIGURACIÓN DE PRODUCCIÓN (HTTPS)
 # ==========================================
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -172,9 +182,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     USE_X_FORWARDED_HOST = True
-    
+    USE_X_FORWARDED_PORT = True
+
     CSRF_TRUSTED_ORIGINS = [
         'https://app.abgbanders.com',
         'https://www.app.abgbanders.com',
-        'https://*.abgbanders.com',
     ]
