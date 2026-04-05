@@ -185,3 +185,20 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
+# ==========================================
+# 13. CONFIGURACIÓN DE CORREO (SMTP)
+# ==========================================
+# Usamos os.getenv para leer las credenciales de tu archivo .env
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Estas variables deben coincidir con los nombres dentro de tu archivo .env
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'consorciojuridicobanders@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = f'Consorcio Jurídico Banders <{EMAIL_HOST_USER}>'
+
+# Configuración extra para Allauth
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Banders Law] '
