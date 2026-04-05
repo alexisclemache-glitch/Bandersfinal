@@ -9,22 +9,30 @@ from django.contrib.messages import constants as messages
 # ==========================================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# VITAL PARA CONTABO: Permite que Django encuentre las apps dentro de 'proyectoBanders'
 sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, os.path.join(BASE_DIR, 'proyectoBanders'))
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # ==========================================
-# 2. SEGURIDAD
+# 2. SEGURIDAD (IMPORTANTE: DEBUG DEBE SER FALSE)
 # ==========================================
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-banders-2026-security-key')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+
+# CAMBIO VITAL: DEBUG debe ser False para que las reglas de HTTPS funcionen
+DEBUG = False
+
+ALLOWED_HOSTS = [
+    '217.216.92.156',
+    'app.abgbanders.com',
+    'www.app.abgbanders.com',
+    'localhost',
+    '127.0.0.1'
+]
 
 # ==========================================
-# 3. APLICACIONES (ESTRICTAMENTE MFA NATIVO V6)
+# 3. APLICACIONES
 # ==========================================
 INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
@@ -36,20 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django.contrib.sites',
-
-    # Allauth Core & MFA Nativo
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.mfa',
-
-    # UI & Herramientas
     'widget_tweaks',
     'crispy_forms',
     'crispy_bootstrap5',
     'simple_history',
-
-    # Apps de Banders (Rutas corregidas)
     'proyectoBanders.usuarios',
     'proyectoBanders.dashboard',
     'proyectoBanders.abogados',
@@ -106,7 +108,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'proyectoBanders.config.wsgi.application'
 
 # ==========================================
-# 6. BASE DE DATOS (USUARIO POSTGRES: 1910)
+# 6. BASE DE DATOS
 # ==========================================
 DATABASES = {
     'default': {
@@ -120,7 +122,7 @@ DATABASES = {
 }
 
 # ==========================================
-# 7. AUTENTICACIÓN Y MODELO CUSTOM
+# 7. AUTENTICACIÓN
 # ==========================================
 AUTH_USER_MODEL = 'usuarios.UsuarioCustom'
 AUTHENTICATION_BACKENDS = [
@@ -129,76 +131,50 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # ==========================================
-# 8. CONFIGURACIÓN ALLAUTH v6.0+
+# 8-10. ALLAUTH, MFA Y CRISPY
 # ==========================================
 ACCOUNT_ADAPTER = 'proyectoBanders.usuarios.adapter.AprobacionAdminAdapter'
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_FORMS = {
     'signup': 'proyectoBanders.usuarios.forms.UsuarioRegistroForm',
     'login': 'proyectoBanders.usuarios.forms.UsuarioLoginForm',
 }
-ACCOUNT_SESSION_REMEMBER = True
-
-# ==========================================
-# 9. INTEGRACIÓN MFA NATIVA
-# ==========================================
 MFA_SUPPORTED_TYPES = ['totp']
-MFA_TOTP_ISSUER = 'Consorcio Banders'
-MFA_PASSWORDS_REQUIRED = True
-MFA_REAUTHENTICATE_TIMEOUT = 1800
-MFA_REAUTHENTICATION_REQUIRED = False
-
-MFA_TOTP_ACTIVATION_REDIRECT_URL = 'dashboard:index'
-MFA_LOGIN_REDIRECT_URL = 'dashboard:index'
-
-# ==========================================
-# 10. CRISPY FORMS
-# ==========================================
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # ==========================================
-# 11. ESTÁTICOS Y MULTIMEDIA (MEDIA)
+# 11-13. ESTÁTICOS, CORREO Y REDIRECCIONES
 # ==========================================
-# Configuración de Archivos Estáticos
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_production')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'proyectoBanders', 'static')]
-
-# CONFIGURACIÓN DE MEDIA (Para clientes/, expedientes/, perfiles/)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# ==========================================
-# 12. REDIRECCIONES Y MENSAJES
-# ==========================================
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'account_login'
-ACCOUNT_LOGOUT_REDIRECT_URL = 'account_login'
 
-MESSAGE_TAGS = {
-    messages.DEBUG: 'secondary',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'danger',
-}
-# ==========================================
-# 13. CONFIGURACIÓN DE CORREO (SMTP)
-# ==========================================
-# Usamos os.getenv para leer las credenciales de tu archivo .env
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-# Estas variables deben coincidir con los nombres dentro de tu archivo .env
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'consorciojuridicobanders@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-DEFAULT_FROM_EMAIL = f'Consorcio Jurídico Banders <{EMAIL_HOST_USER}>'
-
-# Configuración extra para Allauth
-ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Banders Law] '
+# ==========================================
+# 14. CONFIGURACIÓN DE PRODUCCIÓN (CORREGIDA)
+# ==========================================
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    USE_X_FORWARDED_HOST = True
+    
+    CSRF_TRUSTED_ORIGINS = [
+        'https://app.abgbanders.com',
+        'https://www.app.abgbanders.com',
+        'https://*.abgbanders.com',
+    ]
